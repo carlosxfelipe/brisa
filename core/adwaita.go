@@ -126,6 +126,12 @@ func RenderAdwaitaCSS() string {
   --warning-color: #f8e45c;
   --focus-ring: 0 0 0 2px rgba(120, 174, 237, 0.55);
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.24), 0 0 0 1px var(--card-border-color);
+  --popover-bg-color: #36363a;
+  --popover-fg-color: #ffffff;
+  --popover-border-color: rgba(255, 255, 255, 0.09);
+  --popover-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.28), 0 0 0 1px var(--popover-border-color);
+  --popover-hover-bg: rgba(255, 255, 255, 0.08);
+  --popover-active-bg: rgba(255, 255, 255, 0.14);
   --toast-bg: rgba(18, 18, 21, 0.94);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
 }
@@ -164,6 +170,12 @@ func RenderAdwaitaCSS() string {
     --warning-color: #b5835a;
     --focus-ring: 0 0 0 2px rgba(53, 132, 228, 0.45);
     --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--card-border-color);
+    --popover-bg-color: #ffffff;
+    --popover-fg-color: rgba(0, 0, 0, 0.85);
+    --popover-border-color: rgba(0, 0, 0, 0.10);
+    --popover-shadow: 0 6px 20px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--popover-border-color);
+    --popover-hover-bg: rgba(0, 0, 0, 0.06);
+    --popover-active-bg: rgba(0, 0, 0, 0.11);
     --toast-bg: rgba(34, 34, 38, 0.94);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='%23222226' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   }
@@ -202,6 +214,12 @@ func RenderAdwaitaCSS() string {
   --warning-color: #b5835a;
   --focus-ring: 0 0 0 2px rgba(53, 132, 228, 0.45);
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--card-border-color);
+  --popover-bg-color: #ffffff;
+  --popover-fg-color: rgba(0, 0, 0, 0.85);
+  --popover-border-color: rgba(0, 0, 0, 0.10);
+  --popover-shadow: 0 6px 20px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--popover-border-color);
+  --popover-hover-bg: rgba(0, 0, 0, 0.06);
+  --popover-active-bg: rgba(0, 0, 0, 0.11);
   --toast-bg: rgba(34, 34, 38, 0.94);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='%23222226' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
 }
@@ -332,9 +350,9 @@ html, body {
   border-bottom: 1px solid var(--row-divider-color);
 }
 
-.adw-row:last-child { border-bottom: none; }
+.adw-row:first-child { border-top-left-radius: 12px; border-top-right-radius: 12px; }
+.adw-row:last-child { border-bottom: none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
 .adw-row.activatable:hover { background-color: var(--card-hover-bg); }
-.adw-row:focus-within { box-shadow: inset var(--focus-ring); }
 
 .adw-row-text { flex: 1; min-width: 0; }
 .adw-row-title { font-size: 14px; font-weight: 500; color: var(--window-fg-color); }
@@ -372,6 +390,13 @@ html, body {
   flex-shrink: 0;
   cursor: default;
   text-decoration: none;
+  outline: none;
+}
+
+.gtk-btn:focus-visible, button:focus-visible,
+.gtk-dropdown:focus-visible, select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .gtk-btn:hover, button:hover { background-color: var(--button-hover-bg); }
@@ -422,6 +447,104 @@ html, body {
 .gtk-dropdown option, select option {
   background-color: var(--card-bg-color);
   color: var(--window-fg-color);
+}
+
+/* GTK4 / Libadwaita GtkDropDown & GtkPopover Menu */
+.gtk-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gtk-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background-color: var(--button-bg);
+  color: var(--window-fg-color);
+  border: none;
+  border-radius: 9px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 11px 0 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: default;
+  outline: none;
+}
+
+.gtk-dropdown-btn:hover { background-color: var(--button-hover-bg); }
+.gtk-dropdown-btn:active, .gtk-dropdown-btn.open { background-color: var(--button-active-bg); }
+.gtk-dropdown-btn:focus-visible { box-shadow: var(--focus-ring); }
+
+.gtk-dropdown-chevron {
+  width: 12px;
+  height: 12px;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.gtk-popover-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 148px;
+  padding: 6px;
+  border-radius: 12px;
+  background-color: var(--popover-bg-color);
+  color: var(--popover-fg-color);
+  box-shadow: var(--popover-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  transform: scale(0.96) translateY(-4px);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 110ms ease, transform 110ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gtk-popover-menu.open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.gtk-popover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 10px 0 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--popover-fg-color);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+  cursor: default;
+  outline: none;
+}
+
+.gtk-popover-item:hover { background-color: var(--popover-hover-bg); }
+.gtk-popover-item:active { background-color: var(--popover-active-bg); }
+
+.gtk-popover-check {
+  width: 15px;
+  height: 15px;
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.gtk-popover-item.selected .gtk-popover-check {
+  opacity: 1;
 }
 `
 }

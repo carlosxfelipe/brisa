@@ -247,6 +247,106 @@ func (a *App) GenerateJSSDK() string {
     openExternal: function (target) { return invoke("$brisa.openExternal", { target: target }); }
   };
 
+  function upgradeGtkDropdowns() {
+    if (typeof document === "undefined") return;
+    const selects = document.querySelectorAll("select.gtk-dropdown:not([data-adw-upgraded])");
+    selects.forEach(function (sel) {
+      sel.setAttribute("data-adw-upgraded", "1");
+      sel.style.display = "none";
+
+      const wrap = document.createElement("div");
+      wrap.className = "gtk-dropdown-wrap";
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "gtk-dropdown-btn";
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "gtk-dropdown-label";
+      btn.appendChild(labelSpan);
+      btn.insertAdjacentHTML(
+        "beforeend",
+        '<svg class="gtk-dropdown-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>'
+      );
+      wrap.appendChild(btn);
+
+      const menu = document.createElement("div");
+      menu.className = "gtk-popover-menu";
+      menu.setAttribute("role", "listbox");
+      document.body.appendChild(menu);
+
+      function syncItems() {
+        const opts = Array.from(sel.options);
+        const activeOpt = opts.find(function (o) { return o.value === sel.value; }) || opts[0];
+        labelSpan.textContent = activeOpt ? activeOpt.textContent : "";
+        menu.innerHTML = "";
+        opts.forEach(function (opt) {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "gtk-popover-item" + (opt.value === sel.value ? " selected" : "");
+          item.setAttribute("role", "option");
+          const txt = document.createElement("span");
+          txt.textContent = opt.textContent;
+          item.appendChild(txt);
+          item.insertAdjacentHTML(
+            "beforeend",
+            '<svg class="gtk-popover-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="13.5 4.5 6.5 11.5 2.5 7.5"/></svg>'
+          );
+          item.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            sel.value = opt.value;
+            syncItems();
+            closeAllPopovers();
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          menu.appendChild(item);
+        });
+      }
+
+      syncItems();
+      sel.addEventListener("change", syncItems);
+
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        const isOpen = menu.classList.contains("open");
+        closeAllPopovers();
+        if (!isOpen) {
+          syncItems();
+          const rect = btn.getBoundingClientRect();
+          menu.style.top = (rect.bottom + 6) + "px";
+          menu.style.right = Math.max(8, window.innerWidth - rect.right) + "px";
+          menu.style.minWidth = Math.max(148, rect.width) + "px";
+          btn.classList.add("open");
+          menu.classList.add("open");
+        }
+      });
+    });
+  }
+
+  function closeAllPopovers() {
+    if (typeof document === "undefined") return;
+    document.querySelectorAll(".gtk-popover-menu.open, .gtk-dropdown-btn.open").forEach(function (el) {
+      el.classList.remove("open");
+    });
+  }
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", upgradeGtkDropdowns);
+    } else {
+      upgradeGtkDropdowns();
+    }
+    document.addEventListener("click", closeAllPopovers);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeAllPopovers();
+    });
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", closeAllPopovers);
+      window.addEventListener("scroll", closeAllPopovers, true);
+    }
+  }
+
   global.brisa = brisa;
   connectSSE();
 })(typeof window !== "undefined" ? window : globalThis);
