@@ -117,3 +117,23 @@ func TestCheckSecurityToken(t *testing.T) {
 		t.Fatal("expected DisableCSRFToken to allow request")
 	}
 }
+
+func TestRejectsForeignHost(t *testing.T) {
+	app := New(Config{AppID: "com.test.host", Store: StoreOptions{MemoryOnly: true}})
+
+	r := httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
+	r.Host = "evil.com:8080"
+	w := httptest.NewRecorder()
+	app.ServeHTTP(w, r)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("esperava 403 para host estranho, veio %d", w.Code)
+	}
+
+	r = httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
+	r.Host = "127.0.0.1:54321"
+	w = httptest.NewRecorder()
+	app.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("esperava 200 para loopback, veio %d", w.Code)
+	}
+}
