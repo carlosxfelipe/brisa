@@ -102,6 +102,7 @@ func main() {
 	app := brisa.New(brisa.Config{
 		AppID: "com.example.hello",
 		Title: "Hello Brisa",
+		Theme: brisa.ThemeUbuntu, // or brisa.ThemeAdwaita (default GNOME Libadwaita)
 		Window: brisa.WindowConfig{
 			Width:  900,
 			Height: 580,
@@ -200,10 +201,21 @@ brisa.BindService(app, "system", &SystemService{})
 
 ---
 
-## 🎨 GNOME 50 / GTK4 Libadwaita UI Kit (`/brisa/adwaita.css`)
+## 🎨 GNOME Adwaita & Ubuntu Yaru UI Kit (`/brisa/adwaita.css`)
 
-By default, Brisa automatically injects `/brisa/adwaita.css` and `/brisa/sdk.js` into your `index.html`.
-- **OS-Governed Theme**: Light and Dark modes are strictly controlled by the operating system (`org.gnome.desktop.interface color-scheme` on GNOME, `AppleInterfaceStyle` on macOS, `AppsUseLightTheme` on Windows), repainting in the exact same frame as the native window headerbar.
+By default, Brisa automatically injects `/brisa/adwaita.css` and `/brisa/sdk.js` into your `index.html`. All HTML layout and component classes (`.adw-split-view`, `.boxed-list`, `.adw-row`, `.gtk-btn`, `.gtk-dropdown`) work identically across both built-in themes—just set `Theme` in `brisa.Config`:
+
+```go
+app := brisa.New(brisa.Config{
+	Title: "My Desktop App",
+	// Choose your desktop UI design system in Go code:
+	// - brisa.ThemeAdwaita: GNOME 50 / GTK4 Libadwaita (Adwaita Blue #3584e4, Cantarell, 9px/12px radii)
+	// - brisa.ThemeUbuntu:  Canonical Ubuntu Yaru GTK4 (Ubuntu Orange #E95420, Ubuntu Sans, 6px/8px radii)
+	Theme: brisa.ThemeUbuntu,
+})
+```
+
+- **OS-Governed Light & Dark Mode**: Light and Dark modes are strictly controlled by the operating system (`org.gnome.desktop.interface color-scheme` on GNOME/Ubuntu, `AppleInterfaceStyle` on macOS, `AppsUseLightTheme` on Windows), repainting in the exact same frame as the native window headerbar.
 - **Custom CSS Mode**: Set `DisableAdwaitaCSS: true` in `brisa.Config` if you prefer to bring your own stylesheet from scratch.
 
 ---

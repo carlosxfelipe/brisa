@@ -46,6 +46,7 @@ func main() {
 		IndexHTML:          "",                   // Optional inline HTML when Assets is nil
 		DevServerURL:       "",                   // Optional reverse proxy for Vite/frontend dev server
 		InspectorURL:       "/brisa/inspector",   // Default: "/brisa/inspector" (set "-" to disable)
+		Theme:              brisa.ThemeAdwaita,   // Default: brisa.ThemeAdwaita (or brisa.ThemeUbuntu for Ubuntu Yaru GTK4)
 		DisableAdwaitaCSS:  false,                // Default: false (auto-injects /brisa/adwaita.css)
 		DisableCSRFToken:   false,                // Default: false (enforces X-Brisa-Token on /brisa/rpc)
 		SilenceTagWarnings: false,                // Set true to suppress non-fatal startup validation tag warnings
@@ -198,10 +199,11 @@ Inside any command handler or middleware:
 
 ---
 
-## 6. Built-in GNOME 50 / GTK4 Libadwaita UI Kit (`/brisa/adwaita.css`)
+## 6. Built-in GNOME 50 / GTK4 Libadwaita & Ubuntu Yaru UI Kit (`/brisa/adwaita.css`)
 
 Unless `DisableAdwaitaCSS: true` is set, Brisa automatically injects `/brisa/adwaita.css` into `index.html`.
-- **OS-Governed Color Scheme**: Never add manual theme-toggle buttons in the UI. The theme is strictly governed by the OS (`:root` dark tokens + `@media (prefers-color-scheme: light)` + `:root[data-os-theme="light"]` updated in `<1ms` via `stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme`).
+- **Code-Configured UI Flavor (`Theme`)**: Choose between `brisa.ThemeAdwaita` (default GNOME Libadwaita `#3584e4`, `9px`/`12px` radii, `"Cantarell"`) and `brisa.ThemeUbuntu` (Canonical Ubuntu Yaru GTK4 `#e95420`, `6px`/`8px` radii, `"Ubuntu Sans"`, Yaru dark/light surfaces) via `Config.Theme` or `app.SetTheme(...)`.
+- **OS-Governed Color Scheme**: Never add manual theme-toggle buttons in the UI. Light/Dark mode is strictly governed by the OS (`:root` dark tokens + `@media (prefers-color-scheme: light)` + `:root[data-os-theme="light"]` updated in `<1ms` via `stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme`).
 - **Standard Layout Classes**:
   - `.adw-split-view`: 2-column grid (`256px` `.adw-sidebar` + `1fr` `.adw-content-view`).
   - `.adw-sidebar`, `.adw-sidebar-header`, `.adw-nav-list`, `.adw-nav-row` (`.active`).

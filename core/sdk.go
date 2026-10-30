@@ -20,6 +20,7 @@ func (a *App) GenerateJSSDK() string {
   const TOKEN = %q;
   const APP_ID = %q;
   const APP_TITLE = %q;
+  const UI_THEME = %q;
   const INITIAL_OS_THEME = %q;
   const COMMAND_SCHEMAS = %s;
 
@@ -30,6 +31,7 @@ func (a *App) GenerateJSSDK() string {
     if (!theme || typeof document === "undefined") return;
     if (document.documentElement) {
       document.documentElement.setAttribute("data-os-theme", theme);
+      document.documentElement.setAttribute("data-ui-theme", UI_THEME);
       document.documentElement.style.colorScheme = theme;
     }
   }
@@ -196,6 +198,7 @@ func (a *App) GenerateJSSDK() string {
   const brisa = {
     appId: APP_ID,
     title: APP_TITLE,
+    theme: UI_THEME,
     schemas: COMMAND_SCHEMAS,
     BrisaError: BrisaError,
     invoke: invoke,
@@ -350,7 +353,7 @@ func (a *App) GenerateJSSDK() string {
   global.brisa = brisa;
   connectSSE();
 })(typeof window !== "undefined" ? window : globalThis);
-`, a.token, a.config.AppID, a.config.Title, initialOSTheme, string(commandsJSON))
+`, a.token, a.config.AppID, a.config.Title, string(a.Theme()), initialOSTheme, string(commandsJSON))
 }
 
 // GenerateTypeScriptSDK generates full TypeScript declarations (.d.ts) for all registered Brisa commands.

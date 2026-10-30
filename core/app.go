@@ -36,6 +36,7 @@ type Config struct {
 	IndexHTML          string
 	DevServerURL       string
 	InspectorURL       string
+	Theme              Theme
 	DisableAdwaitaCSS  bool
 	DisableCSRFToken   bool
 	SilenceTagWarnings bool
@@ -214,6 +215,7 @@ func New(cfg Config) *App {
 	if cfg.InspectorURL == "" {
 		cfg.InspectorURL = "/brisa/inspector"
 	}
+	cfg.Theme = NormalizeTheme(cfg.Theme)
 	if cfg.Window.Title == "" {
 		cfg.Window.Title = cfg.Title
 	}
@@ -254,7 +256,23 @@ func New(cfg Config) *App {
 
 // Config returns a copy of the application configuration.
 func (a *App) Config() Config {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
 	return a.config
+}
+
+// Theme returns the active desktop UI theme ("adwaita" or "ubuntu").
+func (a *App) Theme() Theme {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.config.Theme
+}
+
+// SetTheme updates the active desktop UI theme in Go.
+func (a *App) SetTheme(theme Theme) {
+	a.mu.Lock()
+	a.config.Theme = NormalizeTheme(theme)
+	a.mu.Unlock()
 }
 
 // Token returns the per-session security token used to authenticate IPC requests.
@@ -579,9 +597,14 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 
 	switch r.URL.Path {
-	case "/brisa/adwaita.css":
+	case "/brisa/adwaita.css", "/brisa/theme.css":
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		_, _ = io.WriteString(w, RenderAdwaitaCSS())
+		_, _ = io.WriteString(w, RenderThemeCSS(a.Theme()))
+		return
+
+	case "/brisa/ubuntu.css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+		_, _ = io.WriteString(w, RenderUbuntuCSS())
 		return
 
 	case "/brisa/sdk.js":
@@ -820,7 +843,10 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	}
 	var snippet strings.Builder
 	snippet.WriteString(`<meta name="google" content="notranslate">`)
-	if !a.config.DisableAdwaitaCSS && !bytes.Contains(htmlBytes, []byte("/brisa/adwaita.css")) {
+	if !a.config.DisableAdwaitaCSS &&
+		!bytes.Contains(htmlBytes, []byte("/brisa/adwaita.css")) &&
+		!bytes.Contains(htmlBytes, []byte("/brisa/ubuntu.css")) &&
+		!bytes.Contains(htmlBytes, []byte("/brisa/theme.css")) {
 		snippet.WriteString(`<link rel="stylesheet" href="/brisa/adwaita.css">`)
 	}
 	snippet.WriteString(`<script src="/brisa/sdk.js"></script>`)

@@ -355,3 +355,39 @@ func TestFailFastOnInvalidValidateTag(t *testing.T) {
 		return brisa.Empty{}, errors.New("unreachable")
 	})
 }
+
+func TestThemesAdwaitaAndUbuntu(t *testing.T) {
+	app := brisa.New(brisa.Config{
+		Theme: brisa.ThemeUbuntu,
+		Store: brisa.StoreOptions{MemoryOnly: true},
+	})
+	if app.Theme() != brisa.ThemeUbuntu {
+		t.Fatalf("expected ThemeUbuntu, got %q", app.Theme())
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil)
+	rec := httptest.NewRecorder()
+	app.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "#e95420") {
+		t.Fatalf("expected Ubuntu Yaru orange (#e95420) in CSS, got status=%d", rec.Code)
+	}
+
+	// Switch back to Adwaita in Go code
+	app.SetTheme(brisa.ThemeAdwaita)
+	if app.Theme() != brisa.ThemeAdwaita {
+		t.Fatalf("expected ThemeAdwaita after SetTheme, got %q", app.Theme())
+	}
+
+	recAdw := httptest.NewRecorder()
+	app.ServeHTTP(recAdw, httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil))
+	if recAdw.Code != http.StatusOK || !strings.Contains(recAdw.Body.String(), "#3584e4") {
+		t.Fatalf("expected GNOME Adwaita blue (#3584e4) in CSS, got status=%d", recAdw.Code)
+	}
+
+	// Direct /brisa/ubuntu.css endpoint always returns Ubuntu Yaru CSS
+	recUbu := httptest.NewRecorder()
+	app.ServeHTTP(recUbu, httptest.NewRequest(http.MethodGet, "/brisa/ubuntu.css", nil))
+	if recUbu.Code != http.StatusOK || !strings.Contains(recUbu.Body.String(), "#e95420") {
+		t.Fatalf("expected Ubuntu Yaru CSS on /brisa/ubuntu.css, got status=%d", recUbu.Code)
+	}
+}

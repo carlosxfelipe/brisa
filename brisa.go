@@ -11,6 +11,7 @@ import (
 type (
 	App                  = core.App
 	Config               = core.Config
+	Theme                = core.Theme
 	WindowConfig         = core.WindowConfig
 	Window               = core.Window
 	WindowState          = core.WindowState
@@ -45,12 +46,15 @@ type (
 	RateLimiterOptions   = core.RateLimiterOptions
 )
 
-// Re-exported WindowState Constants
+// Re-exported WindowState & Theme Constants
 const (
 	WindowStateNormal     = core.WindowStateNormal
 	WindowStateMinimized  = core.WindowStateMinimized
 	WindowStateMaximized  = core.WindowStateMaximized
 	WindowStateFullscreen = core.WindowStateFullscreen
+
+	ThemeAdwaita = core.ThemeAdwaita
+	ThemeUbuntu  = core.ThemeUbuntu
 )
 
 // New initializes and returns a new Brisa desktop application instance.

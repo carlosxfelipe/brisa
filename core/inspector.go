@@ -12,68 +12,20 @@ func (a *App) RenderInspectorHTML() string {
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>%s — Brisa IPC Inspector</title>
+  <link rel="stylesheet" href="/brisa/adwaita.css" />
   <script src="/brisa/sdk.js"></script>
   <style>
     :root {
-      color-scheme: light dark;
-      --window-bg-color: #222226;
-      --window-fg-color: #ffffff;
-      --view-bg-color: #1d1d20;
-      --headerbar-bg-color: #2e2e32;
-      --sidebar-bg-color: #2a2a2e;
-      --card-bg-color: #2e2e32;
-      --card-border-color: rgba(255, 255, 255, 0.07);
-      --divider-color: rgba(255, 255, 255, 0.08);
-      --dim-label: rgba(255, 255, 255, 0.56);
-      --button-bg: rgba(255, 255, 255, 0.10);
-      --button-hover: rgba(255, 255, 255, 0.15);
-      --accent-bg: #3584e4;
-      --accent-hover: #438de6;
-      --accent-color: #78aeed;
-      --success-color: #57e389;
-      --danger-color: #ff7b63;
-    }
-    @media (prefers-color-scheme: light) {
-      :root:not([data-os-theme="dark"]) {
-        --window-bg-color: #fafafb;
-        --window-fg-color: rgba(0, 0, 0, 0.85);
-        --view-bg-color: #ffffff;
-        --headerbar-bg-color: #ebebed;
-        --sidebar-bg-color: #ebebed;
-        --card-bg-color: #ffffff;
-        --card-border-color: rgba(0, 0, 0, 0.08);
-        --divider-color: rgba(0, 0, 0, 0.08);
-        --dim-label: rgba(0, 0, 0, 0.55);
-        --button-bg: rgba(0, 0, 0, 0.07);
-        --button-hover: rgba(0, 0, 0, 0.11);
-        --accent-bg: #3584e4;
-        --accent-hover: #2a76d2;
-        --accent-color: #1c71d8;
-        --success-color: #26a269;
-        --danger-color: #c01c28;
-      }
-    }
-    :root[data-os-theme="light"] {
-      --window-bg-color: #fafafb;
-      --window-fg-color: rgba(0, 0, 0, 0.85);
-      --view-bg-color: #ffffff;
-      --headerbar-bg-color: #ebebed;
-      --sidebar-bg-color: #ebebed;
-      --card-bg-color: #ffffff;
-      --card-border-color: rgba(0, 0, 0, 0.08);
-      --divider-color: rgba(0, 0, 0, 0.08);
-      --dim-label: rgba(0, 0, 0, 0.55);
-      --button-bg: rgba(0, 0, 0, 0.07);
-      --button-hover: rgba(0, 0, 0, 0.11);
-      --accent-bg: #3584e4;
-      --accent-hover: #2a76d2;
-      --accent-color: #1c71d8;
-      --success-color: #26a269;
-      --danger-color: #c01c28;
+      --divider-color: var(--row-divider-color);
+      --dim-label: var(--dim-label-color);
+      --button-hover: var(--button-hover-bg);
+      --accent-bg: var(--accent-bg-color);
+      --accent-hover: var(--accent-hover-bg);
+      --danger-color: var(--destructive-color);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: "Cantarell", "Inter", system-ui, -apple-system, sans-serif;
+      font-family: var(--font-sans, "Cantarell", "Inter", system-ui, -apple-system, sans-serif);
       background: var(--window-bg-color);
       color: var(--window-fg-color);
       display: grid;
@@ -86,7 +38,7 @@ func (a *App) RenderInspectorHTML() string {
     header {
       grid-column: 1 / -1;
       background: var(--headerbar-bg-color);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.45);
+      border-bottom: 1px solid var(--headerbar-border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -107,12 +59,12 @@ func (a *App) RenderInspectorHTML() string {
     }
     aside {
       background: var(--sidebar-bg-color);
-      border-right: 1px solid rgba(0, 0, 0, 0.42);
+      border-right: 1px solid var(--sidebar-border-color);
       padding: 10px 8px;
     }
     .events-col {
       background: var(--sidebar-bg-color);
-      border-left: 1px solid rgba(0, 0, 0, 0.42);
+      border-left: 1px solid var(--sidebar-border-color);
       padding: 12px;
       display: flex;
       flex-direction: column;
@@ -127,21 +79,21 @@ func (a *App) RenderInspectorHTML() string {
     }
     .cmd-item {
       padding: 8px 11px;
-      border-radius: 8px;
+      border-radius: var(--control-radius, 8px);
       cursor: default;
       margin-bottom: 3px;
       transition: background 120ms ease;
     }
-    .cmd-item:hover { background: rgba(255, 255, 255, 0.06); }
+    .cmd-item:hover { background: var(--nav-hover-bg); }
     .cmd-item.active {
-      background: rgba(255, 255, 255, 0.12);
+      background: var(--nav-active-bg);
     }
     .cmd-name { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; font-weight: 600; color: var(--accent-color); }
     .cmd-sum { font-size: 11.5px; color: var(--dim-label); margin-top: 2px; }
     .boxed-group {
       background: var(--card-bg-color);
-      border-radius: 12px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.24), 0 0 0 1px var(--card-border-color);
+      border-radius: var(--card-radius, 12px);
+      box-shadow: var(--card-shadow);
       padding: 16px;
       margin-bottom: 18px;
     }
@@ -150,7 +102,7 @@ func (a *App) RenderInspectorHTML() string {
       background: var(--view-bg-color);
       color: var(--window-fg-color);
       border: 1px solid var(--divider-color);
-      border-radius: 8px;
+      border-radius: var(--control-radius, 8px);
       padding: 10px 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 13px;
@@ -159,7 +111,7 @@ func (a *App) RenderInspectorHTML() string {
       outline: none;
     }
     textarea:focus {
-      box-shadow: 0 0 0 2px rgba(120, 174, 237, 0.55);
+      box-shadow: var(--focus-ring);
     }
     .gtk-btn {
       display: inline-flex;
@@ -169,7 +121,7 @@ func (a *App) RenderInspectorHTML() string {
       background: var(--button-bg);
       color: var(--window-fg-color);
       border: none;
-      border-radius: 9px;
+      border-radius: var(--control-radius, 9px);
       height: 34px;
       min-height: 34px;
       min-width: 34px;
@@ -185,17 +137,17 @@ func (a *App) RenderInspectorHTML() string {
     .gtk-btn:hover { background: var(--button-hover); }
     .gtk-btn.suggested {
       background: var(--accent-bg);
-      color: #ffffff;
+      color: var(--accent-fg-color);
     }
     .gtk-btn.suggested:hover { background: var(--accent-hover); }
     pre {
       background: var(--view-bg-color);
       border: 1px solid var(--divider-color);
-      border-radius: 8px;
+      border-radius: var(--control-radius, 8px);
       padding: 12px;
       font-size: 12.5px;
       overflow-x: auto;
-      color: #e4e4e8;
+      color: var(--view-fg-color);
     }
     .event-log {
       flex: 1;
@@ -207,7 +159,7 @@ func (a *App) RenderInspectorHTML() string {
     .event-entry {
       background: var(--view-bg-color);
       border: 1px solid var(--divider-color);
-      border-radius: 8px;
+      border-radius: var(--control-radius, 8px);
       padding: 8px 10px;
       font-size: 11.5px;
       font-family: ui-monospace, monospace;

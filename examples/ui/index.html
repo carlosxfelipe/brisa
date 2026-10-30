@@ -117,7 +117,7 @@
     }
 
     .gtk-pill.medium {
-      background-color: rgba(53, 132, 228, 0.18);
+      background-color: var(--accent-subtle-bg, rgba(53, 132, 228, 0.18));
       color: var(--accent-color);
     }
 
@@ -203,7 +203,7 @@
 
       <div class="adw-sidebar-footer">
         <span id="os-pill">Go Runtime</span>
-        <span>GTK4 / Adw</span>
+        <span id="theme-pill">GTK4 / Adw</span>
       </div>
     </aside>
 
@@ -415,6 +415,9 @@
     }
 
     async function loadTasks() {
+      if (window.brisa && brisa.theme === "ubuntu") {
+        document.getElementById("theme-pill").textContent = "GTK4 / Yaru";
+      }
       const info = await brisa.call.system.info();
       document.getElementById("os-pill").textContent = info.os + "/" + info.arch + " • " + info.goVersion;
 
