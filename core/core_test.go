@@ -70,3 +70,50 @@ func TestCDPWebSocketClient(t *testing.T) {
 		t.Fatalf("unexpected cdp result: %s", string(raw))
 	}
 }
+
+func TestCheckSecurityToken(t *testing.T) {
+	app := &App{
+		token: "secret-token-123",
+	}
+
+	// 1. Valid token in header
+	req, _ := http.NewRequest(http.MethodGet, "/brisa/events", nil)
+	req.Header.Set("X-Brisa-Token", "secret-token-123")
+	if !app.checkSecurityToken(req) {
+		t.Fatal("expected valid token in header to pass")
+	}
+
+	// 2. Valid token in query param
+	req, _ = http.NewRequest(http.MethodGet, "/brisa/events?token=secret-token-123", nil)
+	if !app.checkSecurityToken(req) {
+		t.Fatal("expected valid token in query to pass")
+	}
+
+	// 3. Invalid token
+	req, _ = http.NewRequest(http.MethodGet, "/brisa/events?token=wrong-token", nil)
+	if app.checkSecurityToken(req) {
+		t.Fatal("expected wrong token to fail")
+	}
+
+	// 4. Missing token
+	req, _ = http.NewRequest(http.MethodGet, "/brisa/events", nil)
+	if app.checkSecurityToken(req) {
+		t.Fatal("expected missing token to fail")
+	}
+
+	// 5. Both empty tokens should not authenticate
+	emptyApp := &App{token: ""}
+	req, _ = http.NewRequest(http.MethodGet, "/brisa/events", nil)
+	if emptyApp.checkSecurityToken(req) {
+		t.Fatal("expected empty token to fail when app token is empty")
+	}
+
+	// 6. DisableCSRFToken bypass
+	disabledApp := &App{
+		config: Config{DisableCSRFToken: true},
+	}
+	req, _ = http.NewRequest(http.MethodGet, "/brisa/events", nil)
+	if !disabledApp.checkSecurityToken(req) {
+		t.Fatal("expected DisableCSRFToken to allow request")
+	}
+}

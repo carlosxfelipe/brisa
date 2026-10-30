@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -663,7 +664,10 @@ func (a *App) checkSecurityToken(r *http.Request) bool {
 	if tok == "" {
 		tok = r.URL.Query().Get("token")
 	}
-	return tok == a.token
+	if tok == "" || a.token == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(tok), []byte(a.token)) == 1
 }
 
 type rpcRequestEnvelope struct {
