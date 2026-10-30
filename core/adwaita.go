@@ -165,6 +165,9 @@ const adwaitaThemeTokens = `/* Brisa Built-in UI Kit — GNOME 50 / GTK4 / Libad
   --destructive-bg-color: rgba(224, 27, 36, 0.16);
   --destructive-hover-bg: rgba(224, 27, 36, 0.26);
   --destructive-color: #ff7b63;
+  --info-bg-color: rgba(53, 132, 228, 0.18);
+  --info-color: #78aeed;
+  --success-bg-color: rgba(87, 227, 137, 0.15);
   --success-color: #57e389;
   --warning-color: #f8e45c;
   --focus-ring: 0 0 0 2px rgba(120, 174, 237, 0.55);
@@ -210,6 +213,9 @@ const adwaitaThemeTokens = `/* Brisa Built-in UI Kit — GNOME 50 / GTK4 / Libad
     --destructive-bg-color: rgba(224, 27, 36, 0.10);
     --destructive-hover-bg: rgba(224, 27, 36, 0.18);
     --destructive-color: #c01c28;
+    --info-bg-color: rgba(53, 132, 228, 0.14);
+    --info-color: #1c71d8;
+    --success-bg-color: rgba(38, 162, 105, 0.14);
     --success-color: #26a269;
     --warning-color: #b5835a;
     --focus-ring: 0 0 0 2px rgba(53, 132, 228, 0.45);
@@ -255,6 +261,9 @@ const adwaitaThemeTokens = `/* Brisa Built-in UI Kit — GNOME 50 / GTK4 / Libad
   --destructive-bg-color: rgba(224, 27, 36, 0.10);
   --destructive-hover-bg: rgba(224, 27, 36, 0.18);
   --destructive-color: #c01c28;
+  --info-bg-color: rgba(53, 132, 228, 0.14);
+  --info-color: #1c71d8;
+  --success-bg-color: rgba(38, 162, 105, 0.14);
   --success-color: #26a269;
   --warning-color: #b5835a;
   --focus-ring: 0 0 0 2px rgba(53, 132, 228, 0.45);
@@ -305,6 +314,9 @@ const ubuntuThemeTokens = `/* Brisa Built-in UI Kit — Canonical Ubuntu Yaru / 
   --destructive-bg-color: rgba(224, 27, 36, 0.16);
   --destructive-hover-bg: rgba(224, 27, 36, 0.26);
   --destructive-color: #ff7b63;
+  --info-bg-color: rgba(53, 132, 228, 0.18);
+  --info-color: #78aeed;
+  --success-bg-color: rgba(71, 212, 90, 0.15);
   --success-color: #47d45a;
   --warning-color: #f99b11;
   --focus-ring: 0 0 0 2px rgba(233, 84, 32, 0.55);
@@ -350,6 +362,9 @@ const ubuntuThemeTokens = `/* Brisa Built-in UI Kit — Canonical Ubuntu Yaru / 
     --destructive-bg-color: rgba(199, 22, 43, 0.10);
     --destructive-hover-bg: rgba(199, 22, 43, 0.18);
     --destructive-color: #c7162b;
+    --info-bg-color: rgba(53, 132, 228, 0.14);
+    --info-color: #1c71d8;
+    --success-bg-color: rgba(14, 132, 32, 0.14);
     --success-color: #0e8420;
     --warning-color: #c46c00;
     --focus-ring: 0 0 0 2px rgba(233, 84, 32, 0.45);
@@ -395,6 +410,9 @@ const ubuntuThemeTokens = `/* Brisa Built-in UI Kit — Canonical Ubuntu Yaru / 
   --destructive-bg-color: rgba(199, 22, 43, 0.10);
   --destructive-hover-bg: rgba(199, 22, 43, 0.18);
   --destructive-color: #c7162b;
+  --info-bg-color: rgba(53, 132, 228, 0.14);
+  --info-color: #1c71d8;
+  --success-bg-color: rgba(14, 132, 32, 0.14);
   --success-color: #0e8420;
   --warning-color: #c46c00;
   --focus-ring: 0 0 0 2px rgba(233, 84, 32, 0.45);
