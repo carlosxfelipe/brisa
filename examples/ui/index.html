@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="google" content="notranslate" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brisa Studio</title>
+  <link rel="stylesheet" href="/brisa/adwaita.css" />
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .adw-sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .adw-nav-row svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+
+    .adw-nav-badge {
+      margin-left: auto;
+      background-color: var(--button-bg);
+      color: var(--dim-label-color);
+      font-size: 11.5px;
+      font-weight: 700;
+      height: 20px;
+      min-width: 22px;
+      padding: 0 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+    }
+
+    .adw-sidebar-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--row-divider-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--dim-label-color);
+    }
+
+    .adw-toolbar-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .adw-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .adw-group-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+
+    .adw-row-prefix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background-color: var(--button-bg);
+      color: var(--window-fg-color);
+      flex-shrink: 0;
+    }
+
+    .adw-entry-input {
+      width: 100%;
+      padding: 4px 0;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .adw-entry-input::placeholder {
+      color: var(--dim-label-color);
+    }
+
+    /* GTK4 Status Badge / Pill (26px height inside rows) */
+    .gtk-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      background-color: var(--button-bg);
+      color: var(--window-fg-color);
+    }
+
+    .gtk-pill.high {
+      background-color: var(--destructive-bg-color);
+      color: var(--destructive-color);
+    }
+
+    .gtk-pill.medium {
+      background-color: rgba(53, 132, 228, 0.18);
+      color: var(--accent-color);
+    }
+
+    .gtk-pill.low {
+      background-color: rgba(87, 227, 137, 0.15);
+      color: var(--success-color);
+    }
+
+    .adw-empty-row {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--dim-label-color);
+      font-size: 13.5px;
+    }
+
+    .adw-toast-overlay {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background-color: var(--toast-bg);
+      color: #ffffff;
+      height: 36px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms ease, transform 150ms ease;
+      z-index: 100;
+    }
+
+    .adw-toast-overlay.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="adw-split-view">
+    <!-- Left Sidebar (AdwNavigationSplitView Sidebar) -->
+    <aside class="adw-sidebar">
+      <div class="adw-sidebar-header">
+        <div class="adw-sidebar-brand">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+          </svg>
+          <span>Brisa</span>
+        </div>
+      </div>
+
+      <nav class="adw-nav-list">
+        <div class="adw-nav-row active" id="nav-tasks" onclick="switchPage('tasks')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span>Tasks</span>
+          <span class="adw-nav-badge" id="tasks-count">0</span>
+        </div>
+
+        <div class="adw-nav-row" id="nav-telemetry" onclick="switchPage('telemetry')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span>System Resources</span>
+        </div>
+
+        <div class="adw-nav-row" id="nav-desktop" onclick="switchPage('desktop')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <span>GNOME Integration</span>
+        </div>
+      </nav>
+
+      <div class="adw-sidebar-footer">
+        <span id="os-pill">Go Runtime</span>
+        <span>GTK4 / Adw</span>
+      </div>
+    </aside>
+
+    <!-- Right Content Pane -->
+    <section class="adw-content-view">
+      <header class="adw-toolbar">
+        <div class="adw-toolbar-title" id="page-title">Tasks</div>
+        <div class="adw-toolbar-actions">
+          <a href="/brisa/inspector" target="_blank" class="gtk-btn flat">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+            <span>IPC Inspector</span>
+          </a>
+        </div>
+      </header>
+
+      <main class="adw-page">
+        <!-- PAGE 1: TASKS (REPR + Encrypted Store) -->
+        <div class="adw-clamp" id="page-tasks">
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">New Task</div>
+                <div class="adw-group-desc">Declarative REPR validation and local AES-256-GCM persistence</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <!-- AdwComboRow -->
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Priority</div>
+                  <div class="adw-row-subtitle">Set the task urgency level</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <select id="task-priority" class="gtk-dropdown">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Normal</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- AdwEntryRow with inline suffix button -->
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-subtitle">Task title</div>
+                  <input id="task-title" class="adw-entry-input" placeholder="e.g. Build Flatpak package..." onkeydown="if(event.key==='Enter') createTask()" />
+                </div>
+                <div class="adw-row-suffix">
+                  <button class="gtk-btn suggested-action" onclick="createTask()">Add Task</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div class="adw-group-title">Saved Tasks</div>
+            </div>
+            <div class="boxed-list" id="task-list">
+              <div class="adw-empty-row">No tasks yet. Create one above.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGE 2: TELEMETRY (Live SSE Stream) -->
+        <div class="adw-clamp hidden" id="page-telemetry">
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">Go Runtime Monitor (Live SSE Stream)</div>
+                <div class="adw-group-desc">Real-time metrics streamed continuously from the Go backend without polling</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <div class="adw-row">
+                <div class="adw-row-prefix">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9"/>
+                  </svg>
+                </div>
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Active Goroutines</div>
+                  <div class="adw-row-subtitle">Lightweight concurrency managed by the Go runtime</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <span class="gtk-pill medium" id="m-goroutines">-</span>
+                </div>
+              </div>
+
+              <div class="adw-row">
+                <div class="adw-row-prefix">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+                  </svg>
+                </div>
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Allocated Heap Memory</div>
+                  <div class="adw-row-subtitle">Current RAM footprint of the Go backend</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <span class="gtk-pill low" id="m-heap">-</span>
+                </div>
+              </div>
+
+              <div class="adw-row">
+                <div class="adw-row-prefix">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Session Uptime</div>
+                  <div class="adw-row-subtitle">Elapsed time since application launch</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <span class="gtk-pill" id="m-uptime">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGE 3: GNOME / NATIVE CONTROLS -->
+        <div class="adw-clamp hidden" id="page-desktop">
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">Window & OS Integration</div>
+                <div class="adw-group-desc">Native actions executed via the pure-Go CDP bridge and OS utilities</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <div class="adw-row activatable">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Window HeaderBar Title</div>
+                  <div class="adw-row-subtitle">Dynamically updates the native GNOME window title</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <button class="gtk-btn" onclick="updateWindowTitle()">Update Title</button>
+                </div>
+              </div>
+
+              <div class="adw-row activatable">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Window Dimensions</div>
+                  <div class="adw-row-subtitle">Resizes the native desktop window via Chrome DevTools Protocol</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <button class="gtk-btn" onclick="resizeApp(1040, 680)">1040 × 680</button>
+                  <button class="gtk-btn" onclick="resizeApp(1240, 780)">1240 × 780</button>
+                </div>
+              </div>
+
+              <div class="adw-row activatable">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">System Clipboard</div>
+                  <div class="adw-row-subtitle">Copies plain text directly to the OS clipboard</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <button class="gtk-btn" onclick="copySample()">Copy Text</button>
+                </div>
+              </div>
+
+              <div class="adw-row activatable">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Native Desktop Notification</div>
+                  <div class="adw-row-subtitle">Triggers a system notification in the desktop shell</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <button class="gtk-btn suggested-action" onclick="sendNativeNotification()">Send Notification</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <!-- GTK4 / Libadwaita AdwToast -->
+  <div id="adw-toast" class="adw-toast-overlay"></div>
+
+  <script>
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById("adw-toast");
+      el.textContent = msg;
+      el.classList.add("visible");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("visible"), 2600);
+    }
+
+    function switchPage(page) {
+      const titles = {
+        tasks: "Tasks",
+        telemetry: "System Resources",
+        desktop: "GNOME Integration"
+      };
+      document.getElementById("page-title").textContent = titles[page] || "Brisa";
+      ["tasks", "telemetry", "desktop"].forEach(p => {
+        document.getElementById("page-" + p).classList.toggle("hidden", p !== page);
+        document.getElementById("nav-" + p).classList.toggle("active", p === page);
+      });
+    }
+
+    async function loadTasks() {
+      const info = await brisa.call.system.info();
+      document.getElementById("os-pill").textContent = info.os + "/" + info.arch + " • " + info.goVersion;
+
+      const list = await brisa.call.tasks.list();
+      renderTasks(list.items || []);
+    }
+
+    const priorityLabels = { low: "Low", medium: "Normal", high: "High" };
+
+    function renderTasks(items) {
+      document.getElementById("tasks-count").textContent = items.length;
+      const container = document.getElementById("task-list");
+      if (!items.length) {
+        container.innerHTML = '<div class="adw-empty-row">No tasks yet. Create one above.</div>';
+        return;
+      }
+      container.innerHTML = items.map(t => `
+        <div class="adw-row activatable">
+          <div class="adw-row-text">
+            <div class="adw-row-title">${escapeHTML(t.title)}</div>
+            <div class="adw-row-subtitle">ID: ${t.id}</div>
+          </div>
+          <div class="adw-row-suffix">
+            <span class="gtk-pill ${t.priority}">${priorityLabels[t.priority] || t.priority}</span>
+            <button class="gtk-btn flat circular" title="Delete task" onclick="deleteTask('${t.id}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--destructive-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[s]));
+    }
+
+    async function createTask() {
+      try {
+        const title = document.getElementById("task-title").value;
+        const priority = document.getElementById("task-priority").value;
+        await brisa.call.tasks.create({ title, priority });
+        document.getElementById("task-title").value = "";
+        showToast("Task added");
+        await loadTasks();
+      } catch (err) {
+        if (err.errors && err.errors.title) {
+          showToast(err.errors.title.join(", "));
+        } else {
+          showToast(err.message);
+        }
+      }
+    }
+
+    async function deleteTask(id) {
+      await brisa.call.tasks.remove({ id });
+      showToast("Task removed");
+      await loadTasks();
+    }
+
+    async function updateWindowTitle() {
+      const title = "Brisa Studio — " + new Date().toLocaleTimeString();
+      await brisa.window.setTitle(title);
+      showToast("Window title updated");
+    }
+
+    async function resizeApp(w, h) {
+      await brisa.window.setSize(w, h);
+      showToast("Window resized to " + w + "×" + h);
+    }
+
+    async function copySample() {
+      await brisa.clipboard.writeText("Copied from Brisa Framework (GTK4 / Libadwaita UI)");
+      showToast("Copied to system clipboard");
+    }
+
+    async function sendNativeNotification() {
+      await brisa.notify({
+        title: "Brisa Studio",
+        body: "Native desktop notification sent from Go!"
+      });
+      showToast("Notification sent");
+    }
+
+    brisa.on("system:telemetry", (data) => {
+      document.getElementById("m-goroutines").textContent = data.goroutines;
+      document.getElementById("m-heap").textContent = data.heapMB + " MB";
+      document.getElementById("m-uptime").textContent = data.uptimeSec + "s";
+    });
+
+    window.addEventListener("DOMContentLoaded", loadTasks);
+  </script>
+</body>
+</html>
