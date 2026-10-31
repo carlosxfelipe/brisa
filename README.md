@@ -9,15 +9,15 @@
 [![Go Version](https://img.shields.io/badge/go-1.26%2B-00ADD8?logo=go&logoColor=white)](go.mod)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Pattern](https://img.shields.io/badge/pattern-REPR%20IPC-blue)](https://deviq.com/design-patterns/repr-design-pattern/)
-[![UI Kit](https://img.shields.io/badge/UI-GNOME%2050%20%2F%20GTK4%20Libadwaita-3584e4)](core/adwaita.go)
+[![UI Kit](https://img.shields.io/badge/UI-GNOME%2050%20%2F%20GTK4%20Libadwaita-3584e4)](core/theme_adwaita.go)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-success)](go.mod)
-[![CGO](<https://img.shields.io/badge/CGO-disabled%20(100%25%20Pure%20Go)-purple>)](go.mod)
+[![CGO](<https://img.shields.io/badge/CGO-Zero%20Deps%20(Pure%20Go%20on%20Linux%2FWin)-purple>)](go.mod)
 
 </div>
 
-**Brisa** is an ultra-lightweight desktop application micro-framework for Go with **zero external dependencies** and **100% pure Go compilation (`CGO_ENABLED=0`)**.
+**Brisa** is an ultra-lightweight desktop application micro-framework for Go with **zero external dependencies**, featuring **100% pure Go compilation (`CGO_ENABLED=0`) on Linux & Windows** and a **native Apple WebKit engine on macOS**.
 
-Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Brisa brings the **REPR Design Pattern (Request-Endpoint-Response)** to desktop IPC and ships with a built-in **GNOME 50 / GTK4 Libadwaita UI Kit** (`/brisa/adwaita.css`) that synchronizes instantaneously with your operating system's Light and Dark mode—without bundling 150MB+ of Electron/Node.js or requiring CGO/GTK C headers.
+Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Brisa brings the **REPR Design Pattern (Request-Endpoint-Response)** to desktop IPC and ships with a built-in **GNOME 50 / GTK4 Libadwaita UI Kit** (`/brisa/adwaita.css`) that synchronizes instantaneously with your operating system's Light and Dark mode—without bundling 150MB+ of Electron/Node.js or requiring GTK/CGO toolchains on Linux & Windows.
 
 <p align="center">
   <img src="preview/dark.png" alt="Brisa Dark Mode" width="49%">
@@ -28,14 +28,14 @@ Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Bris
 
 ## ✨ Key Features
 
-- **Zero External Dependencies & `CGO_ENABLED=0`**: Built 100% on the Go standard library (`net/http`, `embed`, `crypto/aes`, `crypto/sha1`, `reflect`). Cross-compiles cleanly with standard `go build`.
+- **Zero External Dependencies & Multiplatform Engine**: Built 100% on the Go standard library with zero external `go.mod` dependencies. Uses **100% Pure Go (`CGO_ENABLED=0`)** on Linux & Windows via Chromium/CDP, and native **Apple WebKit (`WKWebView`)** on macOS for a 100% native desktop experience.
 - **GNOME 50 / GTK4 Libadwaita UI Kit (`/brisa/adwaita.css`)**: Automatically injected into your app with native-grade `AdwNavigationSplitView`, `AdwPreferencesGroup`, `.boxed-list`, `AdwActionRow`, `AdwEntryRow`, `AdwComboRow`, and uniform 34px GTK4 buttons (`.gtk-btn`, `.suggested-action`, `.destructive-action`, `.flat`, `.circular`, `.pill`).
 - **OS-Governed Light & Dark Mode (<1ms Latency)**: Strictly governed by the operating system—synchronizes in real time with GNOME (`stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme`), macOS (`AppleInterfaceStyle`), Windows Registry, and `@media (prefers-color-scheme)`.
 - **REPR Desktop IPC Bridge**: Typed command registration (`brisa.Bind`, `brisa.BindEndpoint`, `brisa.BindService`) with automatic JSON payload binding and declarative struct tag validation (`validate:"required,min=3,oneof=..."`).
 - **Auto-Generated JS & TypeScript SDK**: Serves `/brisa/sdk.js` at runtime (automatically injected into `index.html`) exposing `brisa.call.<group>.<command>()`, `brisa.invoke()`, `brisa.batch()`, and generates `.d.ts` definitions at `/brisa/types.d.ts`.
 - **Built-in Interactive IPC Inspector**: Inspired by GNOME D-Spy and Gota's Scalar Docs, Brisa includes a zero-dependency interactive Desktop IPC Playground & Live SSE Event Monitor at `/brisa/inspector`.
 - **Encrypted Local Store**: Built-in persistent key-value and JSON configuration store (`ctx.Store()`) backed by atomic file writes and optional **AES-256-GCM encryption** at rest.
-- **Native OS Integration**: Cross-platform Window control via a pure-Go Chrome DevTools Protocol (CDP) WebSocket client (resize, move, minimize, maximize, fullscreen, title, JS eval), File/Directory/Message Dialogs, Clipboard, and Desktop Notifications.
+- **Native OS Integration**: Cross-platform Window control (resize, move, minimize, maximize, fullscreen, title, JS eval), dynamic Dock/Taskbar icons, File/Directory/Message Dialogs, Clipboard, and Desktop Notifications.
 
 > 📖 Looking for in-depth architecture patterns, GTK4 CSS classes, validation rules, and AI coding guidance? See [llms.txt](llms.txt).
 
@@ -45,20 +45,20 @@ Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Bris
 
 Traditional desktop web frameworks like **Electron** bundle an entire copy of Chromium and Node.js inside every application binary (~150 MB to 250 MB per app). Other Go desktop frameworks rely on **CGO** (`webkit2gtk-4.1` C headers, `gcc`, complex cross-compilation toolchains) and heavy external dependency trees.
 
-**Brisa takes the Deno Desktop (WebUI / Gluon) and Lorca approach—engineered 100% on the Go standard library:**
+**Brisa takes the best of both worlds—engineered with zero external `go.mod` dependencies:**
 
 1. **No Bundled Browser Engine (~5–8 MB Single Binary)**: Your compiled binary contains only your Go code and embedded UI assets (`embed.FS`).
-2. **Reuses the OS Browser Engine in Chromeless App-Mode**: At startup, `brisa.LocateBrowser()` automatically finds an existing Chromium-based engine already installed on the user's machine (Chrome, Chromium, Brave, Edge, or Vivaldi across Linux, macOS, and Windows) and launches an isolated, chromeless desktop window (`--app`) with extensions, sync, translation popups, and background networking stripped out.
-3. **Pure-Go Chrome DevTools Protocol (CDP) Bridge**: Instead of CGO bindings, Brisa connects to the window using a built-in, zero-dependency RFC 6455 WebSocket client (`core/cdp.go`) to control window geometry (`SetSize`, `SetPosition`, `Minimize`, `Maximize`, `SetFullscreen`, `SetTitle`, `Eval`, `Close`) natively from Go.
+2. **Native Apple WebKit on macOS (`WKWebView`)**: On macOS, Brisa instantiates an official Cocoa `NSWindow` with `WKWebView`, providing a 100% native Mac experience (Dock icon, menu bar, window minimization/restoration, and ~30 MB RAM) without opening or depending on Chrome.
+3. **Chromium App-Mode on Linux & Windows (`CGO_ENABLED=0`)**: On Linux and Windows, Brisa automatically finds an existing Chromium-based engine (Chrome, Chromium, Brave, Edge) and launches an isolated, chromeless desktop window (`--app`) with pure-Go Chrome DevTools Protocol (CDP) WebSocket window control—100% Pure Go with zero CGO required.
 
-| Feature                       | Electron         | CGO WebView Frameworks           | **Brisa 🌬️**                          |
-| :---------------------------- | :--------------- | :------------------------------- | :------------------------------------ |
-| **Binary Size**               | ~150 MB – 250 MB | ~15 MB – 40 MB                   | **~5 MB – 8 MB**                      |
-| **External `go.mod` Deps**    | N/A (Node/npm)   | Dozens of packages               | **0 (100% Go stdlib)**                |
-| **Requires CGO / C Compiler** | N/A              | Yes (`gcc`, GTK/WebKit headers)  | **No (`CGO_ENABLED=0`)**              |
-| **Browser Engine**            | Bundled per app  | OS WebKit / WebView2 (via C FFI) | **Reuses OS Browser (`--app` + CDP)** |
-| **IPC Architecture**          | Untyped channels | Custom / reflection bindings     | **Typed REPR + Auto Validation**      |
-| **Built-in UI Kit**           | None             | None                             | **GNOME 50 / GTK4 Libadwaita**        |
+| Feature                       | Electron         | CGO WebView Frameworks           | **Brisa 🌬️**                                                     |
+| :---------------------------- | :--------------- | :------------------------------- | :--------------------------------------------------------------- |
+| **Binary Size**               | ~150 MB – 250 MB | ~15 MB – 40 MB                   | **~5 MB – 8 MB**                                                 |
+| **External `go.mod` Deps**    | N/A (Node/npm)   | Dozens of packages               | **0 (100% Go stdlib)**                                           |
+| **Requires CGO / C Compiler** | N/A              | Yes (`gcc`, GTK/WebKit headers)  | **No on Linux/Windows (`CGO_ENABLED=0`)**; Native on macOS       |
+| **Browser Engine**            | Bundled per app  | OS WebKit / WebView2 (via C FFI) | **Native WKWebView (macOS) / System Chromium (Linux & Windows)** |
+| **IPC Architecture**          | Untyped channels | Custom / reflection bindings     | **Typed REPR + Auto Validation**                                 |
+| **Built-in UI Kit**           | None             | None                             | **GNOME 50 / GTK4 Libadwaita**                                   |
 
 ---
 
@@ -253,6 +253,12 @@ go fmt ./...
 ```
 
 ## 🧪 Running Tests
+
+```bash
+go test ./... -v
+```
+
+Or for pure Go testing (`CGO_ENABLED=0`):
 
 ```bash
 CGO_ENABLED=0 go test ./... -v

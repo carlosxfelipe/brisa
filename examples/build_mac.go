@@ -30,12 +30,11 @@ func main() {
 		fatalf("failed to create Resources directory: %v", err)
 	}
 
-	// 2. Compile Go binary (100% Pure Go, CGO_ENABLED=0)
+	// 2. Compile native macOS Go binary
 	binPath := filepath.Join(macOSDir, appName)
-	fmt.Printf("🔨 Compiling binary (CGO_ENABLED=0) -> %s\n", binPath)
+	fmt.Printf("🔨 Compiling native macOS binary -> %s\n", binPath)
 
 	buildCmd := exec.Command("go", "build", "-trimpath", "-ldflags=-s -w", "-o", binPath, "main.go")
-	buildCmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 	if out, err := buildCmd.CombinedOutput(); err != nil {
 		fatalf("go build failed: %s (%v)", string(out), err)
 	}

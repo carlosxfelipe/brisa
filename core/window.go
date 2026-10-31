@@ -8,9 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
-	"time"
 )
 
 // WindowState represents the visual state of a desktop window.
@@ -123,6 +121,8 @@ func (w *Window) SetTitle(title string) error {
 	w.cfg.Title = title
 	w.mu.Unlock()
 
+	w.setPlatformTitle(title)
+
 	if w.HasCDP() {
 		_, _ = w.Eval(fmt.Sprintf("document.title = %q", title))
 	}
@@ -142,6 +142,8 @@ func (w *Window) SetSize(width, height int) error {
 	w.cfg.Height = height
 	w.state = WindowStateNormal
 	w.mu.Unlock()
+
+	w.setPlatformSize(width, height)
 
 	if err := w.setCDPBounds(map[string]any{
 		"windowState": "normal",
@@ -163,6 +165,8 @@ func (w *Window) SetPosition(x, y int) error {
 	w.cfg.Y = y
 	w.mu.Unlock()
 
+	w.setPlatformPosition(x, y)
+
 	if err := w.setCDPBounds(map[string]any{
 		"windowState": "normal",
 		"left":        x,
@@ -182,6 +186,8 @@ func (w *Window) Minimize() error {
 	w.state = WindowStateMinimized
 	w.mu.Unlock()
 
+	w.minimizePlatform()
+
 	if err := w.setCDPBounds(map[string]any{"windowState": "minimized"}); err == nil {
 		return nil
 	}
@@ -197,6 +203,8 @@ func (w *Window) Maximize() error {
 	w.state = WindowStateMaximized
 	w.mu.Unlock()
 
+	w.maximizePlatform()
+
 	if err := w.setCDPBounds(map[string]any{"windowState": "maximized"}); err == nil {
 		return nil
 	}
@@ -211,6 +219,8 @@ func (w *Window) Restore() error {
 	w.mu.Lock()
 	w.state = WindowStateNormal
 	w.mu.Unlock()
+
+	w.restorePlatform()
 
 	if err := w.setCDPBounds(map[string]any{"windowState": "normal"}); err == nil {
 		return nil
@@ -232,6 +242,8 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 	w.state = state
 	w.mu.Unlock()
 
+	w.setPlatformFullscreen(fullscreen)
+
 	if err := w.setCDPBounds(map[string]any{"windowState": string(state)}); err == nil {
 		return nil
 	}
@@ -243,6 +255,7 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 
 // Eval evaluates a JavaScript expression in the desktop window context and returns the result.
 func (w *Window) Eval(expression string) (any, error) {
+	w.evalPlatform(expression)
 	w.mu.RLock()
 	cdp := w.cdp
 	sessionID := w.sessionID
@@ -327,168 +340,6 @@ func (w *Window) setCDPBounds(bounds map[string]any) error {
 		"bounds":   bounds,
 	}, "")
 	return err
-}
-
-func (w *Window) launch(targetURL string) error {
-	if w.cfg.Headless {
-		return nil
-	}
-
-	bin := w.cfg.BrowserPath
-	if bin == "" {
-		bin = LocateBrowser()
-	}
-	if bin == "" {
-		return errors.New("brisa window: no compatible Chromium/Chrome/Edge/Brave browser found on system; install one or set WindowConfig.BrowserPath")
-	}
-
-	profileDir, err := os.MkdirTemp("", "brisa-profile-*")
-	if err != nil {
-		return fmt.Errorf("brisa window profile dir: %w", err)
-	}
-
-	args := []string{
-		"--app=" + targetURL,
-		"--user-data-dir=" + profileDir,
-		"--no-first-run",
-		"--no-default-browser-check",
-		"--disable-translate",
-		"--disable-features=Translate,TranslateUI,BackForwardCache,AcceptCHFrame,MediaRouter,OptimizationHints",
-		"--disable-extensions",
-		"--disable-sync",
-		"--disable-background-networking",
-		"--remote-debugging-port=0",
-		"--remote-allow-origins=*",
-		fmt.Sprintf("--window-size=%d,%d", w.cfg.Width, w.cfg.Height),
-	}
-	if w.app != nil && w.app.config.AppID != "" {
-		args = append(args, "--class="+w.app.config.AppID)
-	}
-	if w.cfg.X != 0 || w.cfg.Y != 0 {
-		args = append(args, fmt.Sprintf("--window-position=%d,%d", w.cfg.X, w.cfg.Y))
-	}
-	if w.cfg.Fullscreen {
-		args = append(args, "--start-fullscreen")
-	} else if w.cfg.Maximized {
-		args = append(args, "--start-maximized")
-	}
-	args = append(args, w.cfg.CustomFlags...)
-
-	cmd := exec.Command(bin, args...)
-	if err := cmd.Start(); err != nil {
-		_ = os.RemoveAll(profileDir)
-		return fmt.Errorf("brisa window start %q: %w", bin, err)
-	}
-
-	w.mu.Lock()
-	w.cmd = cmd
-	w.profile = profileDir
-	w.mu.Unlock()
-
-	go w.attachCDP(profileDir, targetURL)
-
-	go func() {
-		_ = cmd.Wait()
-		_ = w.Close()
-	}()
-
-	return nil
-}
-
-func (w *Window) attachCDP(profileDir, targetURL string) {
-	activePortFile := filepath.Join(profileDir, "DevToolsActivePort")
-	deadline := time.Now().Add(4 * time.Second)
-	var raw []byte
-	for time.Now().Before(deadline) {
-		select {
-		case <-w.closed:
-			return
-		default:
-		}
-		if b, err := os.ReadFile(activePortFile); err == nil && len(b) > 0 {
-			lines := strings.Split(strings.TrimSpace(string(b)), "\n")
-			if len(lines) >= 2 {
-				raw = b
-				break
-			}
-		}
-		time.Sleep(40 * time.Millisecond)
-	}
-	if len(raw) == 0 {
-		return
-	}
-
-	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
-	port := strings.TrimSpace(lines[0])
-	wsPath := strings.TrimSpace(lines[1])
-	wsURL := fmt.Sprintf("ws://127.0.0.1:%s%s", port, wsPath)
-
-	client, err := dialCDP(wsURL, 2*time.Second)
-	if err != nil {
-		return
-	}
-
-	w.mu.Lock()
-	w.cdp = client
-	w.mu.Unlock()
-
-	// Find the page target and attach session + windowId
-	res, err := client.call("Target.getTargets", nil, "")
-	if err != nil {
-		return
-	}
-	var targets struct {
-		TargetInfos []struct {
-			TargetID string `json:"targetId"`
-			Type     string `json:"type"`
-			URL      string `json:"url"`
-		} `json:"targetInfos"`
-	}
-	if err := json.Unmarshal(res, &targets); err != nil {
-		return
-	}
-	var pageTargetID string
-	for _, t := range targets.TargetInfos {
-		if t.Type == "page" {
-			pageTargetID = t.TargetID
-			if strings.HasPrefix(t.URL, targetURL) {
-				break
-			}
-		}
-	}
-	if pageTargetID == "" {
-		return
-	}
-
-	attachRes, err := client.call("Target.attachToTarget", map[string]any{
-		"targetId": pageTargetID,
-		"flatten":  true,
-	}, "")
-	if err == nil {
-		var attached struct {
-			SessionID string `json:"sessionId"`
-		}
-		if json.Unmarshal(attachRes, &attached) == nil {
-			w.mu.Lock()
-			w.targetID = pageTargetID
-			w.sessionID = attached.SessionID
-			w.mu.Unlock()
-		}
-	}
-
-	winRes, err := client.call("Browser.getWindowForTarget", map[string]any{
-		"targetId": pageTargetID,
-	}, "")
-	if err == nil {
-		var winInfo struct {
-			WindowID int `json:"windowId"`
-		}
-		if json.Unmarshal(winRes, &winInfo) == nil {
-			w.mu.Lock()
-			w.windowID = winInfo.WindowID
-			w.mu.Unlock()
-		}
-	}
 }
 
 // LocateBrowser searches standard OS paths for an installed Chromium-based browser capable of app-mode rendering.

@@ -1040,10 +1040,7 @@ func (a *App) Run() error {
 	if a.config.Window.Headless {
 		<-ctx.Done()
 	} else {
-		select {
-		case <-a.window.Done():
-		case <-ctx.Done():
-		}
+		a.window.runLoop(ctx)
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
