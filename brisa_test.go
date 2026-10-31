@@ -136,10 +136,14 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 		"index.html": &fstest.MapFile{
 			Data: []byte(`<!DOCTYPE html><html><head><title>App</title></head><body><h1>Hello Brisa</h1></body></html>`),
 		},
+		"icon.png": &fstest.MapFile{
+			Data: []byte("\x89PNG\r\n\x1a\n"),
+		},
 	}
 
 	app := brisa.New(brisa.Config{
 		Title:  "Bridge Test",
+		Icon:   "icon.png",
 		Assets: fsMap,
 		Store:  brisa.StoreOptions{MemoryOnly: true},
 	})
@@ -160,8 +164,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 		t.Fatalf("expected index.html with injected sdk.js, got status=%d body=%s", recIndex.Code, recIndex.Body.String())
 	}
 
-	// 2. SDK JS, Adwaita CSS, Schema JSON, TypeScript SDK, and Inspector HTML
-	for _, endpoint := range []string{"/brisa/adwaita.css", "/brisa/sdk.js", "/brisa/schema.json", "/brisa/types.d.ts", "/brisa/inspector"} {
+	// 2. SDK JS, Adwaita CSS, Icon PNG, Schema JSON, TypeScript SDK, and Inspector HTML
+	for _, endpoint := range []string{"/brisa/adwaita.css", "/brisa/icon.png", "/brisa/sdk.js", "/brisa/schema.json", "/brisa/types.d.ts", "/brisa/inspector"} {
 		r := httptest.NewRequest(http.MethodGet, endpoint, nil)
 		r.Host = "127.0.0.1"
 

@@ -31,6 +31,7 @@ type Config struct {
 	Title              string
 	Version            string
 	Description        string
+	Icon               string
 	Addr               string
 	Assets             fs.FS
 	AssetsSubDir       string
@@ -197,6 +198,8 @@ type App struct {
 	listener   net.Listener
 	baseURL    string
 	AssetsFS   fs.FS
+	iconBytes  []byte
+	iconPath   string
 }
 
 // New creates and initializes a new Brisa desktop application.
@@ -225,12 +228,15 @@ func New(cfg Config) *App {
 	_, _ = rand.Read(tokenBytes[:])
 	token := hex.EncodeToString(tokenBytes[:])
 
+	rawAssets := cfg.Assets
 	assets := cfg.Assets
 	if assets != nil && cfg.AssetsSubDir != "" {
 		if sub, err := fs.Sub(assets, cfg.AssetsSubDir); err == nil {
 			assets = sub
 		}
 	}
+
+	iconBytes, iconPath := resolveAppIcon(cfg.Icon, rawAssets, assets)
 
 	store, err := NewStore(cfg.AppID, cfg.Store)
 	if err != nil {
@@ -246,6 +252,8 @@ func New(cfg Config) *App {
 		sseClients:    make(map[*sseSubscriber]struct{}),
 		store:         store,
 		AssetsFS:      assets,
+		iconBytes:     iconBytes,
+		iconPath:      iconPath,
 	}
 	app.window = newWindow(app, cfg.Window)
 	app.dialog = &Dialog{app: app}
@@ -628,6 +636,13 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.WriteString(w, RenderWindowsCSS())
 		return
 
+	case "/brisa/icon.png", "/favicon.ico":
+		if len(a.iconBytes) > 0 {
+			w.Header().Set("Content-Type", http.DetectContentType(a.iconBytes))
+			_, _ = w.Write(a.iconBytes)
+			return
+		}
+
 	case "/brisa/sdk.js":
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
@@ -899,6 +914,9 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	}
 	var snippet strings.Builder
 	snippet.WriteString(`<meta name="google" content="notranslate">`)
+	if len(a.iconBytes) > 0 && !bytes.Contains(htmlBytes, []byte(`rel="icon"`)) {
+		snippet.WriteString(`<link rel="icon" type="image/png" sizes="512x512" href="/brisa/icon.png"><link rel="apple-touch-icon" href="/brisa/icon.png">`)
+	}
 	if !a.config.DisableAdwaitaCSS &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/adwaita.css")) &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/ubuntu.css")) &&
@@ -919,6 +937,30 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	out.Write(scriptTag)
 	out.Write(htmlBytes)
 	return out.Bytes()
+}
+
+func resolveAppIcon(icon string, rawAssets, subAssets fs.FS) ([]byte, string) {
+	icon = strings.TrimSpace(icon)
+	if icon == "" {
+		return nil, ""
+	}
+	clean := strings.TrimPrefix(path.Clean(strings.ReplaceAll(icon, "\\", "/")), "/")
+	for _, fsys := range []fs.FS{rawAssets, subAssets} {
+		if fsys != nil {
+			if data, err := fs.ReadFile(fsys, clean); err == nil && len(data) > 0 {
+				if _, statErr := os.Stat(icon); statErr == nil {
+					return data, icon
+				}
+				return data, ""
+			}
+		}
+	}
+	for _, candidate := range []string{icon, path.Join("examples", clean)} {
+		if data, err := os.ReadFile(candidate); err == nil && len(data) > 0 {
+			return data, candidate
+		}
+	}
+	return nil, ""
 }
 
 // Start starts the internal loopback server and launches the desktop window without blocking.

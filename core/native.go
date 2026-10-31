@@ -407,6 +407,9 @@ func Notify(app *App, opts NotificationOptions) error {
 	if opts.Title == "" && app != nil {
 		opts.Title = app.config.Title
 	}
+	if opts.Icon == "" && app != nil && app.iconPath != "" {
+		opts.Icon = app.iconPath
+	}
 	if app != nil {
 		app.Emit("brisa:notification", opts)
 	}

@@ -40,6 +40,7 @@ func main() {
 		Title:              "Brisa Studio",       // Default: "Brisa Desktop App"
 		Version:            "1.0.0",              // Default: "1.0.0"
 		Description:        "Desktop app built with Brisa REPR IPC",
+		Icon:               "assets/icon.png",    // Optional path to PNG icon (in Assets or on disk; served at /brisa/icon.png)
 		Addr:               "127.0.0.1:0",        // Default: "127.0.0.1:0" (ephemeral loopback port)
 		Assets:             uiAssets,             // Optional fs.FS / embed.FS
 		AssetsSubDir:       "ui",                 // Optional subdirectory inside Assets

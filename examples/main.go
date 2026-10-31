@@ -12,7 +12,7 @@ import (
 	"github.com/carlosxfelipe/brisa"
 )
 
-//go:embed ui
+//go:embed ui assets/icon.png
 var uiAssets embed.FS
 
 // DTOs for REPR Commands
@@ -65,6 +65,7 @@ func main() {
 		Title:        "Brisa Desktop Studio",
 		Version:      "1.0.0",
 		Description:  "Zero-dependency desktop application powered by Brisa.",
+		Icon:         "assets/icon.png",
 		Theme:        brisa.ThemeUbuntu, // Default: brisa.ThemeAdwaita
 		Assets:       uiAssets,
 		AssetsSubDir: "ui",
