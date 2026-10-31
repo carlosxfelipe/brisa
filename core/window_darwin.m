@@ -4,12 +4,37 @@
 
 extern void brisaOnNativeWindowClosed(void);
 
-@interface BrisaNativeWindowDelegate : NSObject <NSWindowDelegate>
+@interface BrisaNativeWindowDelegate : NSObject <NSWindowDelegate, WKUIDelegate, WKNavigationDelegate>
 @end
 
 @implementation BrisaNativeWindowDelegate
 - (void)windowWillClose:(NSNotification *)notification {
     brisaOnNativeWindowClosed();
+}
+
+- (WKWebView *)webView:(WKWebView *)webView
+createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
+   forNavigationAction:(WKNavigationAction *)navigationAction
+        windowFeatures:(WKWindowFeatures *)windowFeatures {
+    NSURL *url = navigationAction.request.URL;
+    if (url) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+    return nil;
+}
+
+- (void)webView:(WKWebView *)webView
+decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
+decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+    if (navigationAction.targetFrame == nil) {
+        NSURL *url = navigationAction.request.URL;
+        if (url) {
+            [[NSWorkspace sharedWorkspace] openURL:url];
+        }
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
+    decisionHandler(WKNavigationActionPolicyAllow);
 }
 @end
 
@@ -58,7 +83,16 @@ void brisaCreateWindow(const char* title, int width, int height, int x, int y, i
         [gBrisaWindow setDelegate:gBrisaDelegate];
 
         WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
+        [config.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
+
         gBrisaWebView = [[WKWebView alloc] initWithFrame:frame configuration:config];
+        [gBrisaWebView setUIDelegate:gBrisaDelegate];
+        [gBrisaWebView setNavigationDelegate:gBrisaDelegate];
+
+        if (@available(macOS 13.3, *)) {
+            [gBrisaWebView setInspectable:YES];
+        }
+
         [gBrisaWindow setContentView:gBrisaWebView];
 
         if (urlStr) {
