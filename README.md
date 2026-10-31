@@ -19,6 +19,11 @@
 
 Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Brisa brings the **REPR Design Pattern (Request-Endpoint-Response)** to desktop IPC and ships with a built-in **GNOME 50 / GTK4 Libadwaita UI Kit** (`/brisa/adwaita.css`) that synchronizes instantaneously with your operating system's Light and Dark mode—without bundling 150MB+ of Electron/Node.js or requiring CGO/GTK C headers.
 
+<p align="center">
+  <img src="preview/dark.png" alt="Brisa Dark Mode" width="49%">
+  <img src="preview/light.png" alt="Brisa Light Mode" width="49%">
+</p>
+
 ---
 
 ## ✨ Key Features
