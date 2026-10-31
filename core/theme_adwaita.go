@@ -9,8 +9,7 @@ func RenderAdwaitaCSS() string {
 	return RenderThemeCSS(ThemeAdwaita)
 }
 
-const adwaitaThemeTokens = `/* Brisa Built-in UI Kit — GNOME 50 / GTK4 / Libadwaita 1.6+ Design System (OS-governed) */
-:root {
+const adwaitaThemeTokens = `:root {
   color-scheme: light dark;
   --font-sans: "Cantarell", "Inter", system-ui, -apple-system, sans-serif;
   --control-radius: 9px;

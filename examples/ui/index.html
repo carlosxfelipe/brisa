@@ -197,7 +197,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
           </svg>
-          <span>GNOME Integration</span>
+          <span>Desktop Integration</span>
         </div>
       </nav>
 
@@ -330,7 +330,7 @@
           </div>
         </div>
 
-        <!-- PAGE 3: GNOME / NATIVE CONTROLS -->
+        <!-- PAGE 3: DESKTOP / NATIVE CONTROLS -->
         <div class="adw-clamp hidden" id="page-desktop">
           <div class="adw-group">
             <div class="adw-group-header">
@@ -344,7 +344,7 @@
               <div class="adw-row activatable">
                 <div class="adw-row-text">
                   <div class="adw-row-title">Window HeaderBar Title</div>
-                  <div class="adw-row-subtitle">Dynamically updates the native GNOME window title</div>
+                  <div class="adw-row-subtitle">Dynamically updates the native desktop window title</div>
                 </div>
                 <div class="adw-row-suffix">
                   <button class="gtk-btn" onclick="updateWindowTitle()">Update Title</button>
@@ -405,7 +405,7 @@
       const titles = {
         tasks: "Tasks",
         telemetry: "System Resources",
-        desktop: "GNOME Integration"
+        desktop: "Desktop Integration"
       };
       document.getElementById("page-title").textContent = titles[page] || "Brisa";
       ["tasks", "telemetry", "desktop"].forEach(p => {
@@ -493,7 +493,7 @@
     }
 
     async function copySample() {
-      await brisa.clipboard.writeText("Copied from Brisa Framework (GTK4 / Libadwaita UI)");
+      await brisa.clipboard.writeText("Copied from Brisa Framework");
       showToast("Copied to system clipboard");
     }
 

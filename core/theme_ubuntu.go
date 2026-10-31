@@ -9,8 +9,7 @@ func RenderUbuntuCSS() string {
 	return RenderThemeCSS(ThemeUbuntu)
 }
 
-const ubuntuThemeTokens = `/* Brisa Built-in UI Kit — Canonical Ubuntu Yaru / GTK4 / Libadwaita Design System (OS-governed) */
-:root {
+const ubuntuThemeTokens = `:root {
   color-scheme: light dark;
   --font-sans: "Ubuntu Sans", "Ubuntu", "Cantarell", "Inter", system-ui, -apple-system, sans-serif;
   --control-radius: 6px;
