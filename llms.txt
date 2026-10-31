@@ -2,107 +2,149 @@
 
 > Minimalist, zero-dependency desktop application micro-framework for Go built around the **REPR Design Pattern (Request-Endpoint-Response)** for IPC commands, featuring **5 built-in desktop themes** (GNOME Libadwaita, Ubuntu Yaru, KDE Plasma, macOS Aqua, Windows 11 Fluent) with OS-governed Light/Dark synchronization and an interactive D-Spy style IPC Inspector (`/brisa/inspector`).
 
-This document is the definitive specification, API reference, and rulebook for the **Brisa** desktop framework in Go. Strictly follow the signatures, struct tags, CSS classes, and constraints documented here.
+This document is the definitive specification, API reference, and rulebook for the **Brisa** desktop framework in Go. Strictly follow the signatures, struct tags, CSS classes, and architectural constraints documented here.
 
 ---
 
 ## 1. Overview & Core Philosophy
 
 - **Module & Import**: `github.com/carlosxfelipe/brisa`
-  - Import **only** `github.com/carlosxfelipe/brisa` in application code. All core types (`App`, `Config`, `WindowConfig`, `Window`, `WindowState`, `Context`, `Command`, `CommandGroup`, `CommandDoc`, `CommandSchema`, `FieldSchema`, `InspectorSpec`, `DispatchResult`, `HandlerFunc`, `MiddlewareFunc`, `EventHandler`, `Map`, `Empty`, `RPCError`, `ErrorResponse`, `ValidationError`, `Validator`, `ContextValidator`, `Store`, `StoreOptions`, `Dialog`, `FileFilter`, `FileDialogOptions`, `MessageDialogOptions`, `NotificationOptions`, `Clipboard`) are re-exported on the root `brisa` package.
-- **Zero External Dependencies**: `go.mod` contains zero third-party packages. Built 100% on the Go standard library (`net/http`, `embed`, `reflect`, `encoding/json`, `crypto/aes`, `crypto/cipher`, `crypto/sha1`, `crypto/sha256`, `log/slog`, `sync`).
-- **Hybrid Desktop Engine Model (Zero `go.mod` Dependencies)**: Unlike Electron (which bundles 150–250 MB of Chromium + Node.js per app), Brisa produces a lightweight ~5–8 MB single binary. On macOS, it instantiates Apple's native `WKWebView` (WebKit) for a 100% native Cocoa desktop experience (native Dock icon, menu bar, ~30 MB RAM). On Linux and Windows, it compiles in **100% Pure Go (`CGO_ENABLED=0`)** and reuses the user's existing OS browser engine (Chrome, Chromium, Edge, Brave, Vivaldi discovered via `brisa.LocateBrowser()`) in an isolated, chromeless `--app` window controlled via a pure-Go RFC 6455 WebSocket client (`core/cdp.go`) speaking Chrome DevTools Protocol (CDP).
-- **OS-Governed Desktop UI Themes**: Brisa serves `/brisa/theme.css` (with 5 built-in themes: `ThemeAdwaita`, `ThemeUbuntu`, `ThemePlasma`, `ThemeMacOS`, `ThemeWindows`) and automatically synchronizes Light/Dark mode strictly from the operating system (`stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme` on Linux/GNOME, `AppleInterfaceStyle` on macOS, `AppsUseLightTheme` on Windows, and native `@media (prefers-color-scheme)`). Do **not** build manual/internal theme switchers in Brisa apps; let the OS govern the theme.
+  - In application code, import **only** `github.com/carlosxfelipe/brisa`.
+  - All core types and helpers are re-exported on the root package:
+    - **Types**: `App`, `Config`, `Theme`, `WindowConfig`, `Window`, `WindowState`, `Context`, `Command`, `CommandGroup`, `CommandDoc`, `CommandSchema`, `FieldSchema`, `InspectorSpec`, `DispatchResult`, `HandlerFunc`, `MiddlewareFunc`, `EventHandler`, `Map`, `Empty`, `RPCError`, `ErrorResponse`, `ValidationError`, `Validator`, `ContextValidator`, `Store`, `StoreOptions`, `Dialog`, `FileFilter`, `FileDialogOptions`, `MessageDialogOptions`, `NotificationOptions`, `Clipboard`, `RequestIDOptions`, `SlogLoggerOptions`, `RateLimiterOptions`.
+    - **Constants**: `ThemeAdwaita`, `ThemeUbuntu`, `ThemePlasma`, `ThemeMacOS`, `ThemeWindows`, `WindowStateNormal`, `WindowStateMinimized`, `WindowStateMaximized`, `WindowStateFullscreen`.
+    - **Constructors & Helpers**: `New`, `Bind`, `BindEndpoint`, `BindService`, `NewError`, `SilenceTagWarnings`, `LocateBrowser`, `OpenExternal`.
+    - **Middlewares**: `Recover`, `Logger`, `SlogLogger`, `RequestID`, `Timeout`, `RateLimiter`.
+- **Zero External Dependencies**: `go.mod` has 0 third-party packages. Brisa is built 100% on the Go standard library (`net/http`, `embed`, `reflect`, `encoding/json`, `crypto/aes`, `crypto/cipher`, `crypto/sha1`, `crypto/sha256`, `log/slog`, `sync`).
+- **Hybrid Desktop Engine Model**:
+  - **macOS**: Instantiates an Apple Cocoa `NSWindow` with native `WKWebView` (`darwin && cgo`) for a 100% native Mac experience (Dock icon, menu bar, ~30 MB RAM) without opening Chrome. (Also supports pure Go fallback under `!cgo`).
+  - **Linux & Windows**: Compiles in **100% Pure Go (`CGO_ENABLED=0`)** and runs in chromeless desktop app-mode (`--app`) using an existing system browser (Chrome, Chromium, Edge, Brave, Vivaldi discovered via `brisa.LocateBrowser()`), controlled via an RFC 6455 pure-Go WebSocket client speaking Chrome DevTools Protocol (CDP).
+- **OS-Governed Desktop UI Themes**: Brisa serves `/brisa/theme.css` with 5 built-in desktop themes and automatically synchronizes Light/Dark mode strictly from the operating system (`gsettings` on GNOME/Ubuntu, `AppleInterfaceStyle` on macOS, Registry on Windows, and `@media (prefers-color-scheme)`). **Never** build manual theme switchers in Brisa apps; let the OS govern the theme.
 - **Go Version**: Requires **Go 1.26+**.
 
 ---
 
 ## 2. Application Bootstrap & Configuration
 
-`brisa.New` accepts a single `brisa.Config` struct:
+Create an application instance using `brisa.New(brisa.Config{ ... })`:
 
 ```go
 package main
 
 import (
+	"context"
 	"embed"
 	"log"
+	"time"
 
 	"github.com/carlosxfelipe/brisa"
 )
 
-//go:embed ui
+//go:embed ui/*
 var uiAssets embed.FS
 
 func main() {
 	app := brisa.New(brisa.Config{
-		AppID:              "com.example.studio", // Default: "com.brisa.app" (used for OS config dir)
+		AppID:              "com.example.studio", // Default: "com.brisa.app" (used for config storage dir)
 		Title:              "Brisa Studio",       // Default: "Brisa Desktop App"
 		Version:            "1.0.0",              // Default: "1.0.0"
 		Description:        "Desktop app built with Brisa REPR IPC",
-		Icon:               "assets/icon.png",    // Optional path to PNG icon (in Assets or on disk; served at /brisa/icon.png)
+		Icon:               "assets/icon.png",    // Optional icon path in Assets or disk (served at /brisa/icon.png)
 		Addr:               "127.0.0.1:0",        // Default: "127.0.0.1:0" (ephemeral loopback port)
-		Assets:             uiAssets,             // Optional fs.FS / embed.FS
+		Assets:             uiAssets,             // Optional embed.FS or fs.FS
 		AssetsSubDir:       "ui",                 // Optional subdirectory inside Assets
-		IndexHTML:          "",                   // Optional inline HTML when Assets is nil
+		IndexHTML:          "",                   // Optional inline HTML string when Assets is nil
 		DevServerURL:       "",                   // Optional reverse proxy for Vite/frontend dev server
 		InspectorURL:       "/brisa/inspector",   // Default: "/brisa/inspector" (set "-" to disable)
 		Theme:              brisa.ThemeAdwaita,   // Default: brisa.ThemeAdwaita
-		DisableAdwaitaCSS:  false,                // Default: false (auto-injects /brisa/adwaita.css)
-		DisableCSRFToken:   false,                // Default: false (enforces X-Brisa-Token on /brisa/rpc)
-		SilenceTagWarnings: false,                // Set true to suppress non-fatal startup validation tag warnings
+		DisableAdwaitaCSS:  false,                // Default: false (auto-injects built-in theme CSS)
+		DisableCSRFToken:   false,                // Default: false (enforces X-Brisa-Token on RPC)
+		SilenceTagWarnings: false,                // Suppresses non-fatal startup tag warnings
 		Window: brisa.WindowConfig{
 			Title:       "Brisa Studio",
 			Width:       1120,  // Default: 1080
 			Height:      740,   // Default: 720
-			X:           0,     // Optional initial X coordinate
-			Y:           0,     // Optional initial Y coordinate
-			Fullscreen:  false, // Start in fullscreen mode
+			MinWidth:    400,   // Minimum window width constraint
+			MinHeight:   300,   // Minimum window height constraint
+			X:           0,     // Initial X coordinate (0 for system default)
+			Y:           0,     // Initial Y coordinate (0 for system default)
+			Center:      true,  // Centers window on primary monitor
+			Fullscreen:  false, // Start in fullscreen
 			Maximized:   false, // Start maximized
-			Headless:    false, // Set true for CI / automated tests without a display server
-			BrowserPath: "",    // Optional custom path to Chromium/Chrome/Edge/Brave binary
+			Frameless:   false, // Set true for borderless chromeless window
+			AlwaysOnTop: false, // Pin window above other windows
+			Headless:    false, // Set true for CI / headless testing
+			BrowserPath: "",    // Optional explicit path to Chromium/Edge/Brave binary
 			CustomFlags: nil,   // Optional extra Chromium CLI flags
 		},
 		Store: brisa.StoreOptions{
 			Path:          "",               // Default: os.UserConfigDir()/<AppID>/store.json
-			EncryptionKey: "my-secret-key",  // Optional: enables AES-256-GCM encryption at rest
-			MemoryOnly:    false,            // Set true for in-memory ephemeral storage (e.g. unit tests)
+			EncryptionKey: "my-secret-key",  // Optional: enables transparent AES-256-GCM encryption
+			MemoryOnly:    false,            // In-memory RAM storage only (ideal for tests)
 		},
 	})
 
 	// Global Middlewares
 	app.Use(brisa.Recover(), brisa.Logger())
 
+	// Lifecycle hooks
+	app.OnStartup(func(ctx context.Context) error {
+		// Runs before server bind and window launch
+		return nil
+	})
+	app.OnReady(func(a *brisa.App) {
+		// Runs after server is bound and window is launched
+	})
+	app.OnBeforeClose(func(a *brisa.App) bool {
+		// Return false to prevent window closure
+		return true
+	})
+	app.OnShutdown(func(a *brisa.App) {
+		// Cleanup when app exits
+	})
+
 	log.Fatal(app.Run())
 }
 ```
 
-### Lifecycle Hooks & Methods on `*brisa.App`
+### Methods on `*brisa.App`
 
-- `app.OnStartup(func(ctx context.Context) error)`: Executed before the loopback server and window launch.
-- `app.OnReady(func(app *brisa.App))`: Executed once the loopback server is bound and the desktop window is launched.
-- `app.OnBeforeClose(func(app *brisa.App) bool)`: Called before shutdown; returning `false` aborts closing.
-- `app.OnShutdown(func(app *brisa.App))`: Cleanup hook executed when the app exits.
-- `app.Start(ctx context.Context) error`: Non-blocking start (binds server, launches window, starts OS theme watcher).
-- `app.Run() error`: Blocking start that waits until the desktop window closes or `os.Interrupt`/`syscall.SIGTERM` is received.
-- `app.Shutdown(ctx context.Context) error`: Gracefully closes the window and shuts down the loopback HTTP server.
-- `app.Dispatch(ctx context.Context, command string, payload any) (*brisa.DispatchResult, error)`: Executes any registered IPC command directly in Go memory (runs full middleware + validation pipeline).
-- `app.ServeHTTP(w http.ResponseWriter, r *http.Request)`: Implements `http.Handler` for `httptest`.
+- **Execution**:
+  - `app.Run() error`: Blocking execution until window closes or `SIGINT`/`SIGTERM` received.
+  - `app.Start(ctx context.Context) error`: Non-blocking start (binds server, launches window, starts OS theme watcher).
+  - `app.Shutdown(ctx context.Context) error`: Gracefully closes window and loopback server.
+  - `app.Dispatch(ctx, command, payload) (*brisa.DispatchResult, error)`: Executes a command in-memory through the full middleware + validation pipeline.
+  - `app.ServeHTTP(w, r)`: Implements standard `http.Handler` for testing via `httptest`.
+- **Registration & Routing**:
+  - `app.Use(mw ...brisa.MiddlewareFunc) *brisa.App`: Registers global middlewares.
+  - `app.Group(prefix string, mw ...brisa.MiddlewareFunc) *brisa.CommandGroup`: Creates a scoped command group.
+- **Native OS Subsystems**:
+  - `app.Window() *brisa.Window`: Active desktop window instance.
+  - `app.Dialog() *brisa.Dialog`: Native message boxes and file/folder dialogs.
+  - `app.Clipboard() *brisa.Clipboard`: System clipboard read/write.
+  - `app.Store() *brisa.Store`: Thread-safe persistent key-value / JSON store.
+  - `app.Notify(brisa.NotificationOptions) error`: Desktop notifications.
+- **Events & State**:
+  - `app.On(event string, handler brisa.EventHandler)`: Listens for backend or frontend events.
+  - `app.Emit(event string, data any)`: Broadcasts event to Go listeners and frontend SSE.
+  - `app.Theme() brisa.Theme` / `app.SetTheme(theme brisa.Theme)`: Reads or changes the active theme.
+  - `app.Token() string`: CSRF security token.
+  - `app.BaseURL() string`: Loopback URL (e.g. `http://127.0.0.1:54321`).
 
 ---
 
 ## 3. The REPR Pattern for Desktop IPC
 
 Every desktop IPC operation is organized into three components:
-1. **Request DTO (`TReq`)**: Input struct with `json`, `validate`, `msg`, `doc`, and `example` tags (use `brisa.Empty` when no input is needed).
+1. **Request DTO (`TReq`)**: Go struct with `json`, `validate`, `msg`, `doc`, and `example` tags. Use `brisa.Empty` when no input payload is required.
 2. **Endpoint**: Handler function `func(ctx *brisa.Context, req TReq) (TRes, error)` or struct implementing `brisa.Endpoint[TReq, TRes]`.
-3. **Response DTO (`TRes`)**: Output struct or value serialized as JSON (use `brisa.Empty` when returning no data).
+3. **Response DTO (`TRes`)**: Output struct or value serialized to JSON. Use `brisa.Empty` when returning no data.
 
 ### 3.1 Functional REPR Command (`brisa.Bind`)
 
 ```go
 type CreateTaskRequest struct {
-	Title    string `json:"title" doc:"Task title" example:"Ship Flatpak" validate:"required,min=3,max=80"`
+	Title    string `json:"title" doc:"Task title" example:"Buy groceries" validate:"required,min=3,max=80"`
 	Priority string `json:"priority" doc:"Urgency" example:"high" validate:"required,oneof=low,medium,high"`
 }
 
@@ -115,10 +157,14 @@ type Task struct {
 tasks := app.Group("tasks").Tags("Tasks")
 
 brisa.Bind(tasks, "create", func(ctx *brisa.Context, req CreateTaskRequest) (Task, error) {
-	return Task{ID: "tsk_1", Title: req.Title, Priority: req.Priority}, nil
+	// req is automatically bound and validated before handler execution!
+	task := Task{ID: "tsk_1", Title: req.Title, Priority: req.Priority}
+	_ = ctx.Store().Set("tasks:"+task.ID, task)
+	ctx.Emit("tasks:created", task)
+	return task, nil
 }).
-	Summary("Create a new task").
-	Description("Validates input declaratively and persists to the encrypted store.").
+	Summary("Create task").
+	Description("Validates input declaratively and saves into local store.").
 	Middleware(brisa.Timeout(5 * time.Second))
 ```
 
@@ -131,112 +177,243 @@ func (e *CreateTaskEndpoint) Handle(ctx *brisa.Context, req CreateTaskRequest) (
 	return Task{ID: "tsk_1", Title: req.Title, Priority: req.Priority}, nil
 }
 
-brisa.BindEndpoint(tasks, "create", &CreateTaskEndpoint{}).Summary("Create a new task")
+brisa.BindEndpoint(tasks, "create", &CreateTaskEndpoint{}).Summary("Create task")
 ```
 
 ### 3.3 Reflected Service Struct (`brisa.BindService`)
 
-Automatically reflects exported methods on a struct and registers them as `<namespace>.<camelCaseMethod>`:
+Automatically registers exported methods as `<namespace>.<camelCaseMethod>`:
 
 ```go
 type SystemService struct{}
 
 func (s *SystemService) Info() (brisa.Map, error) {
-	return brisa.Map{"os": runtime.GOOS}, nil
+	return brisa.Map{"os": runtime.GOOS, "arch": runtime.GOARCH}, nil
 }
 
-// Registers "system.info"
+// Registers "system.info" (invoked in JS as await brisa.call.system.info())
 brisa.BindService(app, "system", &SystemService{})
 ```
 
-Supported method signatures on a service struct:
+Supported method signatures:
 - `func(ctx *brisa.Context, req TReq) (TRes, error)`
 - `func(req TReq) (TRes, error)`
 - `func(ctx *brisa.Context) (TRes, error)`
 - `func() (TRes, error)`
 
+### 3.4 Fluent Command Metadata
+
+- `.Summary(string)`: Short headline for IPC Inspector and TypeScript docs.
+- `.Description(string)`: Detailed description.
+- `.Tags(...string)`: Grouping tags for Inspector navigation.
+- `.Deprecated()`: Marks command as deprecated in Inspector and TypeScript definitions.
+- `.Middleware(...brisa.MiddlewareFunc)`: Attaches command-specific middlewares.
+
 ---
 
 ## 4. Declarative Validation (`validate` & `msg` Tags)
 
-Validation runs automatically before the command handler executes. Invalid `validate` rule names panic at registration time (`validation.CheckTags`) so typos fail fast at startup.
+Validation executes automatically during payload binding before the handler is called. Unknown rule names trigger a panic at startup (`validation.CheckTags`) so typos are caught immediately.
 
 | Rule | Description | Example |
 | :--- | :--- | :--- |
-| `required` | Rejects zero values (`""`, whitespace-only string, `0`, `false`, `nil` pointer/slice/map). | `validate:"required"` |
-| `min=N` | Minimum numeric value, UTF-8 rune count (`string`), or item count (`slice`). | `validate:"min=3"` |
-| `max=N` | Maximum numeric value, UTF-8 rune count (`string`), or item count (`slice`). | `validate:"max=80"` |
-| `len=N` | Exact UTF-8 rune count (`string`) or item count (`slice`/`map`). | `validate:"len=4"` |
+| `required` | Rejects zero values (`""`, whitespace-only string, `0`, `false`, `nil`). | `validate:"required"` |
+| `min=N` | Minimum numeric value, UTF-8 rune count (`string`), or slice length. | `validate:"min=3"` |
+| `max=N` | Maximum numeric value, UTF-8 rune count (`string`), or slice length. | `validate:"max=80"` |
+| `len=N` | Exact UTF-8 rune count (`string`) or slice/map length. | `validate:"len=4"` |
 | `oneof=a,b,c` | Value must match one of the listed options (comma or space separated). | `validate:"oneof=low,medium,high"` |
 | `email` | Valid email address (`net/mail`). | `validate:"email"` |
 | `url` | Valid URL with scheme and host (`net/url`). | `validate:"url"` |
 | `uuid` | Valid RFC 4122 UUID. | `validate:"uuid"` |
-| `nowarn` | Suppresses startup warning when `required` is placed on a non-pointer numeric/bool field. | `validate:"required,nowarn"` |
+| `omitempty` | Skips subsequent rules if the field value is empty / zero. | `validate:"omitempty,email"` |
+| `nowarn` | Suppresses startup warning when `required` is on non-pointer numeric/bool. | `validate:"required,nowarn"` |
 
-### Custom Validation Messages & Interfaces
+### Custom Messages & Custom Validators
 
 - **Custom `msg` / `message` Tag**:
   - Single fallback message: `msg:"Title is invalid"`
-  - Per-rule messages separated by `|`: `msg:"required:Title is required|min:Title must have at least 3 chars"`
-- **Custom `Validator` / `ContextValidator` Interfaces**:
-  - Implement `Validate() error` or `Validate(ctx *brisa.Context) error` on the request struct for cross-field validation; errors are added under `_general`.
+  - Per-rule custom messages separated by `|`: `msg:"required:Title is required|min:Must be at least 3 chars"`
+- **Custom `Validator` / `ContextValidator`**:
+  - Implement `Validate() error` or `Validate(ctx *brisa.Context) error` on the request struct for custom multi-field validation. Returned errors appear under the `_general` key in the response.
 
 ---
 
-## 5. `brisa.Context` & Error Handling
+## 5. `brisa.Context`, Error Handling & Native APIs
 
 Inside any command handler or middleware:
-- `ctx.Context() context.Context` / `ctx.WithContext(c)`
-- `ctx.Command() string`: Name of the invoked command (e.g. `"tasks.create"`).
-- `ctx.RequestID() string` / `ctx.SetRequestID(id)`
-- `ctx.Set(key, val)` / `ctx.Get(key) (any, bool)` / `ctx.MustGet(key) any`
-- `ctx.Emit(event string, data any)`: Broadcasts a real-time event to Go listeners and all connected frontend windows via SSE.
-- `ctx.Store() *brisa.Store`: Accesses the persistent local key-value/JSON store (`Get`, `GetString`, `GetInt`, `GetBool`, `Set`, `Delete`, `Clear`, `Keys`, `All`).
-- `ctx.Window() *brisa.Window`: Controls the desktop window (`SetTitle`, `SetSize`, `SetPosition`, `Minimize`, `Maximize`, `Restore`, `SetFullscreen`, `Eval`, `Close`, `State`).
-- `ctx.Dialog() *brisa.Dialog`: Opens native OS dialogs (`Info`, `Warn`, `Error`, `Confirm`, `OpenFile`, `OpenMultipleFiles`, `OpenDirectory`, `SaveFile`).
-- `ctx.Clipboard() *brisa.Clipboard`: Reads/writes system clipboard text (`ReadText`, `WriteText`).
-- `ctx.Notify(brisa.NotificationOptions) error`: Sends a native OS desktop notification.
-- `brisa.NewError(status int, code, message string) *brisa.RPCError`: Returns a structured error with HTTP-like status and machine-readable code.
+
+```go
+func(ctx *brisa.Context, req MyRequest) (MyResponse, error) {
+	// Standard context & metadata
+	stdCtx := ctx.Context()
+	cmdName := ctx.Command()       // e.g. "tasks.create"
+	reqID := ctx.RequestID()       // Correlation ID
+
+	// Per-request state store
+	ctx.Set("user_id", 123)
+	val, ok := ctx.Get("user_id")
+
+	// Real-time Event Broadcasting (SSE to frontend + Go event handlers)
+	ctx.Emit("task:updated", brisa.Map{"id": 1, "done": true})
+
+	// Local Persistent Store (AES-256-GCM encrypted or plaintext JSON)
+	var task Task
+	found, err := ctx.Store().Get("tasks:1", &task) // Unmarshals into pointer
+	anyVal, found := ctx.Store().GetAny("theme")
+	name := ctx.Store().GetString("user.name", "Default Name")
+	count := ctx.Store().GetInt("launch_count", 0)
+	enabled := ctx.Store().GetBool("feature_flag", true)
+	_ = ctx.Store().Set("user.name", "Carlos")
+	_ = ctx.Store().Delete("temp_key")
+	_ = ctx.Store().Clear()
+	allKeys := ctx.Store().Keys()
+	allData := ctx.Store().All()
+
+	// Native Desktop Window Control
+	_ = ctx.Window().SetTitle("New Window Title")
+	_ = ctx.Window().SetSize(1200, 800)
+	_ = ctx.Window().SetPosition(100, 100)
+	_ = ctx.Window().Minimize()
+	_ = ctx.Window().Maximize()
+	_ = ctx.Window().Restore()
+	_ = ctx.Window().SetFullscreen(false)
+	state := ctx.Window().State() // WindowStateNormal, WindowStateMinimized, etc.
+	res, err := ctx.Window().Eval("document.title")
+
+	// Native OS Dialogs
+	_ = ctx.Dialog().Info("Title", "Operation successful")
+	_ = ctx.Dialog().Warn("Warning", "Battery low")
+	_ = ctx.Dialog().Error("Error", "File not found")
+	confirmed, _ := ctx.Dialog().Confirm("Question", "Are you sure?")
+	filePath, _ := ctx.Dialog().OpenFile(brisa.FileDialogOptions{
+		Title: "Select File",
+		Filters: []brisa.FileFilter{{Name: "Images", Patterns: []string{"*.png", "*.jpg"}}},
+	})
+	files, _ := ctx.Dialog().OpenMultipleFiles(brisa.FileDialogOptions{Title: "Select Files"})
+	folder, _ := ctx.Dialog().OpenDirectory(brisa.FileDialogOptions{Title: "Select Folder"})
+	destPath, _ := ctx.Dialog().SaveFile(brisa.FileDialogOptions{Title: "Save As", DefaultName: "export.json"})
+
+	// System Clipboard
+	_ = ctx.Clipboard().WriteText("Copied to clipboard")
+	text, _ := ctx.Clipboard().ReadText()
+
+	// Desktop Notifications
+	_ = ctx.Notify(brisa.NotificationOptions{
+		Title: "Download Complete",
+		Body:  "File ready to view",
+		Urgency: "normal", // "low", "normal", "critical"
+	})
+
+	// Structured Errors
+	if someCondition {
+		return MyResponse{}, brisa.NewError(404, "TASK_NOT_FOUND", "Task does not exist")
+	}
+
+	return MyResponse{Success: true}, nil
+}
+```
+
+### Writing Custom Middleware
+
+Middlewares use the `brisa.MiddlewareFunc` signature (`func(ctx *brisa.Context) error`) and call `ctx.Next()` to invoke subsequent handlers:
+
+```go
+func AuditMiddleware() brisa.MiddlewareFunc {
+	return func(ctx *brisa.Context) error {
+		start := time.Now()
+		err := ctx.Next() // Calls next middleware or command handler
+		latency := time.Since(start)
+		log.Printf("[AUDIT] %s took %v (err=%v)", ctx.Command(), latency, err)
+		return err
+	}
+}
+```
 
 ---
 
 ## 6. Built-in Desktop UI Kit & Themes
 
-Unless `DisableAdwaitaCSS: true` is set, Brisa automatically injects its built-in stylesheet (`/brisa/adwaita.css` or `/brisa/theme.css`) into `index.html`. All HTML layout and component classes work identically across all themes.
+Brisa includes a lightweight, pre-configured CSS design kit. Unless `DisableAdwaitaCSS: true` is set, Brisa automatically injects `/brisa/theme.css` into `index.html`.
 
-- **Configuring a Theme (`Config.Theme` or `app.SetTheme(...)`)**:
+- **5 Built-in Themes (`Config.Theme` or `app.SetTheme(...)`)**:
   - `brisa.ThemeAdwaita` (`"adwaita"`, default): GNOME 50 / GTK4 Libadwaita (`#3584e4`, `"Cantarell"`, `9px`/`12px` radii).
-  - `brisa.ThemeUbuntu` (`"ubuntu"` / `"yaru"`): Canonical Ubuntu Yaru GTK4 (`#e95420`, `"Ubuntu Sans"`, `6px`/`8px` radii, `/brisa/ubuntu.css`).
-  - `brisa.ThemePlasma` (`"plasma"` / `"kde"` / `"breeze"`): KDE Plasma Breeze (`#3daee9`, `"Noto Sans"`, `5px`/`6px` radii, `/brisa/plasma.css`).
-  - `brisa.ThemeMacOS` (`"macos"` / `"darwin"` / `"aqua"` / `"mac"`): Apple macOS (`#0a84ff` / `#007aff`, `"SF Pro"`, `8px`/`11px` radii, `/brisa/macos.css`).
-  - `brisa.ThemeWindows` (`"windows"` / `"win11"` / `"fluent"` / `"winui"`): Microsoft Windows 11 Fluent / WinUI 3 (`#0067c0` / `#60cdff`, `"Segoe UI Variable"`, `4px`/`8px` radii, `/brisa/windows.css`).
-- **OS-Governed Color Scheme**: Never add manual theme-toggle buttons in the UI. Light/Dark mode is strictly governed by the OS (`:root` dark tokens + `@media (prefers-color-scheme: light)` + `:root[data-os-theme="light"]` updated in `<1ms` via `stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme`).
-- **Standard Layout Classes**:
-  - `.adw-split-view`: 2-column grid (`256px` `.adw-sidebar` + `1fr` `.adw-content-view`).
-  - `.adw-sidebar`, `.adw-sidebar-header`, `.adw-nav-list`, `.adw-nav-row` (`.active`).
-  - `.adw-content-view`, `.adw-toolbar`, `.adw-page`, `.adw-clamp` (`max-width: 680px` centered container).
-  - `.adw-group`, `.adw-group-title`, `.adw-group-desc`, `.boxed-list` (`border-radius: 12px` card list).
-  - `.adw-row` (`.activatable`), `.adw-row-text`, `.adw-row-title`, `.adw-row-subtitle`, `.adw-row-suffix`.
-  - `.adw-entry-input`: Borderless inline GTK4 entry input inside an `.adw-row`.
-- **Unified GTK4 Button & Dropdown Geometry (`34px` height, `9px` radius)**:
-  - `.gtk-btn` (and `<button>`): `height: 34px; min-height: 34px; padding: 0 14px; border-radius: 9px; font-size: 14px; font-weight: 600;`
-  - Modifiers: `.suggested-action` (Adwaita Blue `#3584e4`), `.destructive-action`, `.flat`, `.circular` (`34px × 34px` icon button), `.pill` (`height: 38px; border-radius: 999px`).
-  - `.gtk-dropdown` (and `<select>`): `appearance: none; height: 34px; border-radius: 9px; padding: 0 32px 0 14px;` with embedded SVG `pan-down-symbolic` chevron.
+  - `brisa.ThemeUbuntu` (`"ubuntu"` / `"yaru"`): Canonical Ubuntu Yaru (`#e95420`, `"Ubuntu Sans"`, `6px`/`8px` radii).
+  - `brisa.ThemePlasma` (`"plasma"` / `"kde"` / `"breeze"`): KDE Plasma Breeze (`#3daee9`, `"Noto Sans"`, `5px`/`6px` radii).
+  - `brisa.ThemeMacOS` (`"macos"` / `"darwin"` / `"aqua"`): Apple macOS (`#0a84ff` / `#007aff`, `"SF Pro"`, `8px`/`11px` radii).
+  - `brisa.ThemeWindows` (`"windows"` / `"win11"` / `"fluent"`): Windows 11 Fluent (`#0067c0` / `#60cdff`, `"Segoe UI Variable"`, `4px`/`8px` radii).
+- **OS-Governed Dark/Light Switching**: Light and Dark modes are governed strictly by the operating system. `:root[data-os-theme="dark"]` and `:root[data-os-theme="light"]` synchronize with the host OS with <1ms latency. Do not build in-app theme toggle buttons.
+- **CSS Layout & Component Classes**:
+  - Layout: `.adw-page`, `.adw-clamp` (`max-width: 680px`), `.adw-split-view`, `.adw-sidebar`, `.adw-sidebar-header`, `.adw-nav-list`, `.adw-nav-row` (`.active`), `.adw-content-view`, `.adw-toolbar`.
+  - Cards & Rows: `.adw-group`, `.adw-group-title`, `.adw-group-desc`, `.boxed-list`, `.adw-row` (`.activatable`), `.adw-row-text`, `.adw-row-title`, `.adw-row-subtitle`, `.adw-row-suffix`.
+  - Inputs: `.adw-entry-input` (borderless inline row input), `.gtk-dropdown` (custom styled `<select>`).
+  - Buttons (`34px` height): `.gtk-btn` (and `<button>`). Modifiers: `.suggested-action`, `.destructive-action`, `.flat`, `.circular` (`34px × 34px`), `.pill` (`height: 38px; border-radius: 999px`).
 
 ---
 
 ## 7. Frontend JavaScript SDK (`/brisa/sdk.js`)
 
-Automatically injected into `index.html` as `window.brisa`:
-- `await brisa.invoke("tasks.create", { title: "Ship v1", priority: "high" })`
-- `await brisa.call.tasks.create({ title: "Ship v1", priority: "high" })`
-- `await brisa.batch([{ command: "tasks.list", payload: {} }])`
-- `const unsub = brisa.on("system:telemetry", (data) => { ... })`
-- `brisa.once("tasks:created", (data) => { ... })`
-- `await brisa.emit("client:ready", { ts: Date.now() })`
-- `await brisa.window.setTitle("New Title")` / `setSize(w, h)` / `setPosition(x, y)` / `minimize()` / `maximize()` / `restore()` / `setFullscreen(true)` / `close()` / `state()`
-- `await brisa.dialog.info(title, msg)` / `warn(title, msg)` / `error(title, msg)` / `confirm(title, msg)` / `openFile(opts)` / `openMultipleFiles(opts)` / `openDirectory(opts)` / `saveFile(opts)`
-- `await brisa.clipboard.writeText("text")` / `await brisa.clipboard.readText()`
-- `await brisa.store.get("key")` / `set("key", val)` / `delete("key")` / `keys()` / `all()` / `clear()`
-- `await brisa.notify({ title: "Done", body: "Completed" })`
-- `await brisa.openExternal("https://example.com")`
+The SDK is automatically injected into `index.html` as `window.brisa`:
+
+```javascript
+// 1. Invoking Commands
+const task = await brisa.call.tasks.create({ title: "Buy Milk", priority: "high" });
+// Or dynamic invocation:
+const result = await brisa.invoke("tasks.create", { title: "Buy Milk", priority: "high" });
+
+// 2. Batching Calls
+const [res1, res2] = await brisa.batch([
+  { command: "system.info" },
+  { command: "tasks.list", payload: {} }
+]);
+
+// 3. Real-time Events (SSE)
+const unsub = brisa.on("task:updated", (data) => console.log("Task changed:", data));
+brisa.once("app:ready", () => console.log("Ready!"));
+await brisa.emit("client:ping", { ts: Date.now() });
+
+// 4. Native OS Operations
+await brisa.window.setTitle("My App");
+await brisa.window.setSize(1024, 768);
+await brisa.window.minimize();
+await brisa.window.maximize();
+await brisa.window.restore();
+await brisa.window.setFullscreen(false);
+const state = await brisa.window.state();
+
+await brisa.dialog.info("Done", "File saved successfully");
+await brisa.dialog.confirm("Confirm", "Delete this item?");
+const filePath = await brisa.dialog.openFile({ title: "Open Document" });
+
+await brisa.clipboard.writeText("Text copied");
+const text = await brisa.clipboard.readText();
+
+await brisa.store.set("preferences", { notifications: true });
+const prefs = await brisa.store.get("preferences");
+
+await brisa.notify({ title: "Alert", body: "Task overdue!" });
+await brisa.openExternal("https://example.com");
+
+// 5. Handling Errors
+try {
+  await brisa.call.tasks.create({ title: "" });
+} catch (err) {
+  if (err instanceof brisa.BrisaError) {
+    console.error(err.code, err.message, err.errors);
+  }
+}
+```
+
+---
+
+## 8. Built-in HTTP Endpoints
+
+Brisa's internal loopback server automatically exposes:
+- `POST /brisa/rpc`: Single command execution (`{ command: string, payload: any }`).
+- `POST /brisa/rpc/batch`: Multi-command atomic batch execution.
+- `GET /brisa/events`: Real-time Server-Sent Events stream (`SSE`).
+- `GET /brisa/sdk.js`: Runtime generated JavaScript SDK.
+- `GET /brisa/types.d.ts`: Generated TypeScript interface definitions for all registered DTOs.
+- `GET /brisa/schema.json`: Introspective command catalog specification.
+- `GET /brisa/inspector`: Interactive IPC Inspector & D-Spy style playground.
+- `GET /brisa/theme.css`: Active CSS desktop design theme (also aliases `/brisa/adwaita.css`, `/brisa/ubuntu.css`, etc.).
+- `GET /brisa/icon.png`: Application icon asset.
