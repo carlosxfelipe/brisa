@@ -224,16 +224,13 @@ func TestEncryptedStorePersistence(t *testing.T) {
 	tmpDir := t.TempDir()
 	storePath := filepath.Join(tmpDir, "encrypted_store.json")
 
-	s1, err := brisa.New(brisa.Config{
+	s1 := brisa.New(brisa.Config{
 		AppID: "com.test.enc",
 		Store: brisa.StoreOptions{
 			Path:          storePath,
 			EncryptionKey: "super-secret-desktop-key",
 		},
-	}).Store(), error(nil)
-	if err != nil {
-		t.Fatalf("failed to create encrypted store: %v", err)
-	}
+	}).Store()
 
 	if err := s1.Set("theme", "dark"); err != nil {
 		t.Fatalf("failed to set key: %v", err)
@@ -243,16 +240,13 @@ func TestEncryptedStorePersistence(t *testing.T) {
 	}
 
 	// Re-open with the same encryption key
-	s2, err := brisa.New(brisa.Config{
+	s2 := brisa.New(brisa.Config{
 		AppID: "com.test.enc",
 		Store: brisa.StoreOptions{
 			Path:          storePath,
 			EncryptionKey: "super-secret-desktop-key",
 		},
-	}).Store(), error(nil)
-	if err != nil {
-		t.Fatalf("failed to reopen store: %v", err)
-	}
+	}).Store()
 
 	if got := s2.GetString("theme"); got != "dark" {
 		t.Fatalf("expected 'dark', got %q", got)
