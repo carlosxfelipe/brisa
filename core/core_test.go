@@ -121,19 +121,53 @@ func TestCheckSecurityToken(t *testing.T) {
 func TestRejectsForeignHost(t *testing.T) {
 	app := New(Config{AppID: "com.test.host", Store: StoreOptions{MemoryOnly: true}})
 
+	// 1. Foreign domain with port should be rejected (DNS rebinding attempt)
 	r := httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
 	r.Host = "evil.com:8080"
 	w := httptest.NewRecorder()
 	app.ServeHTTP(w, r)
 	if w.Code != http.StatusForbidden {
-		t.Fatalf("esperava 403 para host estranho, veio %d", w.Code)
+		t.Fatalf("expected 403 Forbidden for foreign host, got %d", w.Code)
 	}
 
+	// 2. Empty Host header should be rejected
+	r = httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
+	r.Host = ""
+	w = httptest.NewRecorder()
+	app.ServeHTTP(w, r)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 Forbidden for empty host, got %d", w.Code)
+	}
+
+	// 3. IPv4 loopback with port should succeed
 	r = httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
 	r.Host = "127.0.0.1:54321"
 	w = httptest.NewRecorder()
 	app.ServeHTTP(w, r)
 	if w.Code != http.StatusOK {
-		t.Fatalf("esperava 200 para loopback, veio %d", w.Code)
+		t.Fatalf("expected 200 OK for IPv4 loopback, got %d", w.Code)
+	}
+
+	// 4. IPv6 loopback with port should succeed
+	r = httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
+	r.Host = "[::1]:54321"
+	w = httptest.NewRecorder()
+	app.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for IPv6 loopback, got %d", w.Code)
+	}
+
+	// 5. Explicitly configured Addr host should succeed
+	customApp := New(Config{
+		AppID: "com.test.customhost",
+		Addr:  "192.168.1.50:8080",
+		Store: StoreOptions{MemoryOnly: true},
+	})
+	r = httptest.NewRequest(http.MethodGet, "/brisa/sdk.js", nil)
+	r.Host = "192.168.1.50:8080"
+	w = httptest.NewRecorder()
+	customApp.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for configured Addr host, got %d", w.Code)
 	}
 }

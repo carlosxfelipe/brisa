@@ -675,19 +675,36 @@ func (a *App) checkSecurityToken(r *http.Request) bool {
 	return subtle.ConstantTimeCompare([]byte(tok), []byte(a.token)) == 1
 }
 
-// isAllowedHost only accepts localhost and loopback IPs (127.0.0.1, ::1).
+// isAllowedHost only accepts localhost, loopback IPs (127.0.0.1, ::1), or an explicitly configured Addr host.
 // This blocks DNS rebinding, where the browser sends "Host: attacker.example".
 func (a *App) isAllowedHost(hostport string) bool {
+	if a.config.DisableCSRFToken {
+		return true
+	}
+	host := extractHost(hostport)
+	if host == "" {
+		return false
+	}
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+		return true
+	}
+	if cfgHost := extractHost(a.config.Addr); cfgHost != "" && cfgHost != "0.0.0.0" && cfgHost != "::" {
+		if strings.EqualFold(host, cfgHost) {
+			return true
+		}
+	}
+	return false
+}
+
+func extractHost(hostport string) string {
 	host := hostport
 	if h, _, err := net.SplitHostPort(hostport); err == nil {
 		host = h
 	}
-	host = strings.Trim(host, "[]")
-	if strings.EqualFold(host, "localhost") {
-		return true
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
+	return strings.Trim(host, "[]")
 }
 
 type rpcRequestEnvelope struct {
