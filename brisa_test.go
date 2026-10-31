@@ -399,4 +399,27 @@ func TestThemesAdwaitaAndUbuntu(t *testing.T) {
 	if recUbu.Code != http.StatusOK || !strings.Contains(recUbu.Body.String(), "#e95420") {
 		t.Fatalf("expected Ubuntu Yaru CSS on /brisa/ubuntu.css, got status=%d", recUbu.Code)
 	}
+
+	// Switch to KDE Plasma theme in Go code
+	app.SetTheme(brisa.ThemePlasma)
+	if app.Theme() != brisa.ThemePlasma {
+		t.Fatalf("expected ThemePlasma after SetTheme, got %q", app.Theme())
+	}
+
+	recPlasma := httptest.NewRecorder()
+	reqPlasma := httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil)
+	reqPlasma.Host = "127.0.0.1"
+	app.ServeHTTP(recPlasma, reqPlasma)
+	if recPlasma.Code != http.StatusOK || !strings.Contains(recPlasma.Body.String(), "#3daee9") {
+		t.Fatalf("expected KDE Plasma Breeze blue (#3daee9) in CSS, got status=%d", recPlasma.Code)
+	}
+
+	// Direct /brisa/plasma.css endpoint always returns KDE Plasma CSS
+	recPlasmaDirect := httptest.NewRecorder()
+	reqPlasmaDirect := httptest.NewRequest(http.MethodGet, "/brisa/plasma.css", nil)
+	reqPlasmaDirect.Host = "127.0.0.1"
+	app.ServeHTTP(recPlasmaDirect, reqPlasmaDirect)
+	if recPlasmaDirect.Code != http.StatusOK || !strings.Contains(recPlasmaDirect.Body.String(), "#3daee9") {
+		t.Fatalf("expected KDE Plasma CSS on /brisa/plasma.css, got status=%d", recPlasmaDirect.Code)
+	}
 }

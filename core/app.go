@@ -262,7 +262,7 @@ func (a *App) Config() Config {
 	return a.config
 }
 
-// Theme returns the active desktop UI theme ("adwaita" or "ubuntu").
+// Theme returns the active desktop UI theme.
 func (a *App) Theme() Theme {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
@@ -611,6 +611,11 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/brisa/ubuntu.css":
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderUbuntuCSS())
+		return
+
+	case "/brisa/plasma.css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+		_, _ = io.WriteString(w, RenderPlasmaCSS())
 		return
 
 	case "/brisa/sdk.js":

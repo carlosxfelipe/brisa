@@ -16,6 +16,8 @@ func NormalizeTheme(theme Theme) Theme {
 	switch strings.ToLower(strings.TrimSpace(string(theme))) {
 	case "ubuntu", "yaru":
 		return ThemeUbuntu
+	case "plasma", "kde", "breeze":
+		return ThemePlasma
 	default:
 		return ThemeAdwaita
 	}
@@ -101,12 +103,17 @@ func (a *App) startSystemThemeWatcher(ctx context.Context) {
 	}()
 }
 
-// RenderThemeCSS returns the built-in desktop CSS kit for the requested Theme
-// (ThemeAdwaita or ThemeUbuntu), keeping all component classes 100% compatible.
+// RenderThemeCSS returns the built-in desktop CSS kit for the requested Theme.
+// Keeping all component classes 100% compatible across themes.
 func RenderThemeCSS(theme Theme) string {
-	tokens := adwaitaThemeTokens
-	if NormalizeTheme(theme) == ThemeUbuntu {
+	var tokens string
+	switch NormalizeTheme(theme) {
+	case ThemeUbuntu:
 		tokens = ubuntuThemeTokens
+	case ThemePlasma:
+		tokens = plasmaThemeTokens
+	default:
+		tokens = adwaitaThemeTokens
 	}
 	return tokens + sharedComponentCSS
 }

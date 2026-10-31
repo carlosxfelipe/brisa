@@ -11,7 +11,7 @@
 [![Pattern](https://img.shields.io/badge/pattern-REPR%20IPC-blue)](https://deviq.com/design-patterns/repr-design-pattern/)
 [![UI Kit](https://img.shields.io/badge/UI-GNOME%2050%20%2F%20GTK4%20Libadwaita-3584e4)](core/adwaita.go)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-success)](go.mod)
-[![CGO](https://img.shields.io/badge/CGO-disabled%20(100%25%20Pure%20Go)-purple)](go.mod)
+[![CGO](<https://img.shields.io/badge/CGO-disabled%20(100%25%20Pure%20Go)-purple>)](go.mod)
 
 </div>
 
@@ -46,14 +46,14 @@ Traditional desktop web frameworks like **Electron** bundle an entire copy of Ch
 2. **Reuses the OS Browser Engine in Chromeless App-Mode**: At startup, `brisa.LocateBrowser()` automatically finds an existing Chromium-based engine already installed on the user's machine (Chrome, Chromium, Brave, Edge, or Vivaldi across Linux, macOS, and Windows) and launches an isolated, chromeless desktop window (`--app`) with extensions, sync, translation popups, and background networking stripped out.
 3. **Pure-Go Chrome DevTools Protocol (CDP) Bridge**: Instead of CGO bindings, Brisa connects to the window using a built-in, zero-dependency RFC 6455 WebSocket client (`core/cdp.go`) to control window geometry (`SetSize`, `SetPosition`, `Minimize`, `Maximize`, `SetFullscreen`, `SetTitle`, `Eval`, `Close`) natively from Go.
 
-| Feature | Electron | CGO WebView Frameworks | **Brisa 🌬️** |
-| :--- | :--- | :--- | :--- |
-| **Binary Size** | ~150 MB – 250 MB | ~15 MB – 40 MB | **~5 MB – 8 MB** |
-| **External `go.mod` Deps** | N/A (Node/npm) | Dozens of packages | **0 (100% Go stdlib)** |
-| **Requires CGO / C Compiler** | N/A | Yes (`gcc`, GTK/WebKit headers) | **No (`CGO_ENABLED=0`)** |
-| **Browser Engine** | Bundled per app | OS WebKit / WebView2 (via C FFI) | **Reuses OS Browser (`--app` + CDP)** |
-| **IPC Architecture** | Untyped channels | Custom / reflection bindings | **Typed REPR + Auto Validation** |
-| **Built-in UI Kit** | None | None | **GNOME 50 / GTK4 Libadwaita** |
+| Feature                       | Electron         | CGO WebView Frameworks           | **Brisa 🌬️**                          |
+| :---------------------------- | :--------------- | :------------------------------- | :------------------------------------ |
+| **Binary Size**               | ~150 MB – 250 MB | ~15 MB – 40 MB                   | **~5 MB – 8 MB**                      |
+| **External `go.mod` Deps**    | N/A (Node/npm)   | Dozens of packages               | **0 (100% Go stdlib)**                |
+| **Requires CGO / C Compiler** | N/A              | Yes (`gcc`, GTK/WebKit headers)  | **No (`CGO_ENABLED=0`)**              |
+| **Browser Engine**            | Bundled per app  | OS WebKit / WebView2 (via C FFI) | **Reuses OS Browser (`--app` + CDP)** |
+| **IPC Architecture**          | Untyped channels | Custom / reflection bindings     | **Typed REPR + Auto Validation**      |
+| **Built-in UI Kit**           | None             | None                             | **GNOME 50 / GTK4 Libadwaita**        |
 
 ---
 
@@ -201,9 +201,9 @@ brisa.BindService(app, "system", &SystemService{})
 
 ---
 
-## 🎨 GNOME Adwaita & Ubuntu Yaru UI Kit (`/brisa/adwaita.css`)
+## 🎨 Built-in Desktop UI Kit & Themes
 
-By default, Brisa automatically injects `/brisa/adwaita.css` and `/brisa/sdk.js` into your `index.html`. All HTML layout and component classes (`.adw-split-view`, `.boxed-list`, `.adw-row`, `.gtk-btn`, `.gtk-dropdown`) work identically across both built-in themes—just set `Theme` in `brisa.Config`:
+By default, Brisa automatically injects its built-in UI stylesheet and `/brisa/sdk.js` into your `index.html`. All HTML layout and component classes (`.adw-split-view`, `.boxed-list`, `.adw-row`, `.gtk-btn`, `.gtk-dropdown`) work identically across all built-in themes—just set `Theme` in `brisa.Config`:
 
 ```go
 app := brisa.New(brisa.Config{
@@ -211,6 +211,7 @@ app := brisa.New(brisa.Config{
 	// Choose your desktop UI design system in Go code:
 	// - brisa.ThemeAdwaita: GNOME 50 / GTK4 Libadwaita (Adwaita Blue #3584e4, Cantarell, 9px/12px radii)
 	// - brisa.ThemeUbuntu:  Canonical Ubuntu Yaru GTK4 (Ubuntu Orange #E95420, Ubuntu Sans, 6px/8px radii)
+	// - brisa.ThemePlasma:  KDE Plasma Breeze (Breeze Blue #3daee9, Noto Sans, 5px/6px radii)
 	Theme: brisa.ThemeUbuntu,
 })
 ```
