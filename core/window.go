@@ -361,6 +361,9 @@ func (w *Window) launch(targetURL string) error {
 		"--remote-allow-origins=*",
 		fmt.Sprintf("--window-size=%d,%d", w.cfg.Width, w.cfg.Height),
 	}
+	if w.app != nil && w.app.config.AppID != "" {
+		args = append(args, "--class="+w.app.config.AppID)
+	}
 	if w.cfg.X != 0 || w.cfg.Y != 0 {
 		args = append(args, fmt.Sprintf("--window-position=%d,%d", w.cfg.X, w.cfg.Y))
 	}

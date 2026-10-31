@@ -643,6 +643,24 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case "/brisa/manifest.json":
+		w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
+		_ = json.NewEncoder(w).Encode(Map{
+			"name":       a.config.Title,
+			"short_name": a.config.Title,
+			"start_url":  "/",
+			"display":    "standalone",
+			"icons": []Map{
+				{
+					"src":     "/brisa/icon.png",
+					"sizes":   "512x512",
+					"type":    "image/png",
+					"purpose": "any maskable",
+				},
+			},
+		})
+		return
+
 	case "/brisa/sdk.js":
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
@@ -914,6 +932,7 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	}
 	var snippet strings.Builder
 	snippet.WriteString(`<meta name="google" content="notranslate">`)
+	snippet.WriteString(`<link rel="manifest" href="/brisa/manifest.json">`)
 	if len(a.iconBytes) > 0 && !bytes.Contains(htmlBytes, []byte(`rel="icon"`)) {
 		snippet.WriteString(`<link rel="icon" type="image/png" sizes="512x512" href="/brisa/icon.png"><link rel="apple-touch-icon" href="/brisa/icon.png">`)
 	}
@@ -996,6 +1015,9 @@ func (a *App) Start(ctx context.Context) error {
 		_ = srv.Close()
 		return err
 	}
+
+	ensureLinuxDesktopEntry(a.config, a.iconBytes, a.iconPath)
+	setX11WindowIcon(a.config.AppID, a.iconBytes)
 
 	a.startSystemThemeWatcher(ctx)
 

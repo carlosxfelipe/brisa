@@ -164,8 +164,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 		t.Fatalf("expected index.html with injected sdk.js, got status=%d body=%s", recIndex.Code, recIndex.Body.String())
 	}
 
-	// 2. SDK JS, Adwaita CSS, Icon PNG, Schema JSON, TypeScript SDK, and Inspector HTML
-	for _, endpoint := range []string{"/brisa/adwaita.css", "/brisa/icon.png", "/brisa/sdk.js", "/brisa/schema.json", "/brisa/types.d.ts", "/brisa/inspector"} {
+	// 2. SDK JS, Adwaita CSS, Icon PNG, Manifest JSON, Schema JSON, TypeScript SDK, and Inspector HTML
+	for _, endpoint := range []string{"/brisa/adwaita.css", "/brisa/icon.png", "/brisa/manifest.json", "/brisa/sdk.js", "/brisa/schema.json", "/brisa/types.d.ts", "/brisa/inspector"} {
 		r := httptest.NewRequest(http.MethodGet, endpoint, nil)
 		r.Host = "127.0.0.1"
 
