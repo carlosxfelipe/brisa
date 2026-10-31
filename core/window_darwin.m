@@ -153,6 +153,16 @@ void brisaSetSize(int width, int height) {
     });
 }
 
+void brisaSetMinSize(int minWidth, int minHeight) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (gBrisaWindow) {
+            CGFloat mw = minWidth > 0 ? (CGFloat)minWidth : 0;
+            CGFloat mh = minHeight > 0 ? (CGFloat)minHeight : 0;
+            [gBrisaWindow setMinSize:NSMakeSize(mw, mh)];
+        }
+    });
+}
+
 void brisaSetPosition(int x, int y) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (gBrisaWindow) {

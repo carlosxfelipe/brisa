@@ -183,11 +183,12 @@ func (w *Window) attachCDP(profileDir, targetURL string) {
 	}
 }
 
-func (w *Window) setPlatformTitle(title string)     {}
-func (w *Window) setPlatformSize(width, height int) {}
-func (w *Window) setPlatformPosition(x, y int)      {}
-func (w *Window) minimizePlatform()                 {}
-func (w *Window) maximizePlatform()                 {}
-func (w *Window) restorePlatform()                  {}
-func (w *Window) setPlatformFullscreen(fs bool)     {}
-func (w *Window) evalPlatform(js string)            {}
+func (w *Window) setPlatformTitle(title string)        {}
+func (w *Window) setPlatformSize(width, height int)    {}
+func (w *Window) setPlatformMinSize(width, height int) {}
+func (w *Window) setPlatformPosition(x, y int)         {}
+func (w *Window) minimizePlatform()                    {}
+func (w *Window) maximizePlatform()                    {}
+func (w *Window) restorePlatform()                     {}
+func (w *Window) setPlatformFullscreen(fs bool)        {}
+func (w *Window) evalPlatform(js string)               {}

@@ -11,6 +11,7 @@ void brisaRunLoop(void);
 void brisaStopLoop(void);
 void brisaSetTitle(const char* title);
 void brisaSetSize(int width, int height);
+void brisaSetMinSize(int minWidth, int minHeight);
 void brisaSetPosition(int x, int y);
 void brisaMinimize(void);
 void brisaMaximize(void);

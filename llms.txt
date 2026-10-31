@@ -64,8 +64,8 @@ func main() {
 			Title:       "Brisa Studio",
 			Width:       1120,  // Default: 1080
 			Height:      740,   // Default: 720
-			MinWidth:    400,   // Minimum window width constraint
-			MinHeight:   300,   // Minimum window height constraint
+			MinWidth:    680,   // Default: 680 (minimum window width constraint)
+			MinHeight:   480,   // Default: 480 (minimum window height constraint)
 			X:           0,     // Initial X coordinate (0 for system default)
 			Y:           0,     // Initial Y coordinate (0 for system default)
 			Center:      true,  // Centers window on primary monitor

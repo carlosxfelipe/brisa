@@ -1113,6 +1113,20 @@ func (a *App) registerBuiltinCommands() {
 		return ctx.Reply(200, Map{"width": req.Width, "height": req.Height})
 	}, CommandDoc{})
 
+	a.RegisterCommand("$brisa.window.setMinSize", func(ctx *Context) error {
+		var req struct {
+			Width  int `json:"width"`
+			Height int `json:"height"`
+		}
+		if err := ctx.BindJSON(&req); err != nil {
+			return err
+		}
+		if err := a.window.SetMinSize(req.Width, req.Height); err != nil {
+			return NewError(400, "INVALID_WINDOW_MIN_SIZE", err.Error())
+		}
+		return ctx.Reply(200, Map{"width": req.Width, "height": req.Height})
+	}, CommandDoc{})
+
 	a.RegisterCommand("$brisa.window.setPosition", func(ctx *Context) error {
 		var req struct {
 			X int `json:"x"`

@@ -212,6 +212,7 @@ func (a *App) GenerateJSSDK() string {
     window: {
       setTitle: function (title) { return invoke("$brisa.window.setTitle", { title: title }); },
       setSize: function (width, height) { return invoke("$brisa.window.setSize", { width: width, height: height }); },
+      setMinSize: function (width, height) { return invoke("$brisa.window.setMinSize", { width: width, height: height }); },
       setPosition: function (x, y) { return invoke("$brisa.window.setPosition", { x: x, y: y }); },
       minimize: function () { return invoke("$brisa.window.minimize", {}); },
       maximize: function () { return invoke("$brisa.window.maximize", {}); },

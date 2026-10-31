@@ -63,6 +63,30 @@ func newWindow(app *App, cfg WindowConfig) *Window {
 	if cfg.Height <= 0 {
 		cfg.Height = 720
 	}
+	if cfg.MinWidth == 0 {
+		if cfg.Width > 0 && cfg.Width < 680 {
+			cfg.MinWidth = cfg.Width
+		} else {
+			cfg.MinWidth = 680
+		}
+	} else if cfg.MinWidth < 0 {
+		cfg.MinWidth = 0
+	}
+	if cfg.MinHeight == 0 {
+		if cfg.Height > 0 && cfg.Height < 480 {
+			cfg.MinHeight = cfg.Height
+		} else {
+			cfg.MinHeight = 480
+		}
+	} else if cfg.MinHeight < 0 {
+		cfg.MinHeight = 0
+	}
+	if cfg.MinWidth > 0 && cfg.Width < cfg.MinWidth {
+		cfg.Width = cfg.MinWidth
+	}
+	if cfg.MinHeight > 0 && cfg.Height < cfg.MinHeight {
+		cfg.Height = cfg.MinHeight
+	}
 	if cfg.Title == "" && app != nil {
 		cfg.Title = app.config.Title
 	}
@@ -138,6 +162,12 @@ func (w *Window) SetSize(width, height int) error {
 		return errors.New("brisa window: width and height must be positive")
 	}
 	w.mu.Lock()
+	if w.cfg.MinWidth > 0 && width < w.cfg.MinWidth {
+		width = w.cfg.MinWidth
+	}
+	if w.cfg.MinHeight > 0 && height < w.cfg.MinHeight {
+		height = w.cfg.MinHeight
+	}
 	w.cfg.Width = width
 	w.cfg.Height = height
 	w.state = WindowStateNormal
@@ -155,6 +185,20 @@ func (w *Window) SetSize(width, height int) error {
 	if w.app != nil {
 		w.app.Emit("brisa:window:size", Map{"width": width, "height": height})
 	}
+	return nil
+}
+
+// SetMinSize updates the minimum allowable dimensions of the desktop window.
+func (w *Window) SetMinSize(width, height int) error {
+	if width < 0 || height < 0 {
+		return errors.New("brisa window: min width and min height must be non-negative")
+	}
+	w.mu.Lock()
+	w.cfg.MinWidth = width
+	w.cfg.MinHeight = height
+	w.mu.Unlock()
+
+	w.setPlatformMinSize(width, height)
 	return nil
 }
 

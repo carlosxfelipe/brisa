@@ -144,9 +144,10 @@ html, body {
 
 .adw-split-view {
   display: grid;
-  grid-template-columns: 256px 1fr;
+  grid-template-columns: 256px minmax(320px, 1fr);
   height: 100vh;
   width: 100vw;
+  min-width: 580px;
 }
 
 .adw-sidebar {

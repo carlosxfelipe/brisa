@@ -70,10 +70,12 @@ func main() {
 		Assets:       uiAssets,
 		AssetsSubDir: "ui",
 		Window: brisa.WindowConfig{
-			Title:    "Brisa Desktop Studio",
-			Width:    1120,
-			Height:   740,
-			Headless: headless,
+			Title:     "Brisa Desktop Studio",
+			Width:     1120,
+			Height:    740,
+			MinWidth:  680,
+			MinHeight: 480,
+			Headless:  headless,
 		},
 		Store: brisa.StoreOptions{
 			EncryptionKey: "brisa-studio-local-secret-key",

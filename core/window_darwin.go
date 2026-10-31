@@ -70,6 +70,10 @@ func (w *Window) launch(targetURL string) error {
 		iconLen,
 	)
 
+	if w.cfg.MinWidth > 0 || w.cfg.MinHeight > 0 {
+		w.setPlatformMinSize(w.cfg.MinWidth, w.cfg.MinHeight)
+	}
+
 	return nil
 }
 
@@ -99,6 +103,10 @@ func (w *Window) setPlatformTitle(title string) {
 
 func (w *Window) setPlatformSize(width, height int) {
 	C.brisaSetSize(C.int(width), C.int(height))
+}
+
+func (w *Window) setPlatformMinSize(width, height int) {
+	C.brisaSetMinSize(C.int(width), C.int(height))
 }
 
 func (w *Window) setPlatformPosition(x, y int) {
