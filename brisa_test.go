@@ -152,6 +152,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 
 	// 1. Index HTML should inject /brisa/sdk.js automatically
 	reqIndex := httptest.NewRequest(http.MethodGet, "/", nil)
+	reqIndex.Host = "127.0.0.1"
+
 	recIndex := httptest.NewRecorder()
 	app.ServeHTTP(recIndex, reqIndex)
 	if recIndex.Code != http.StatusOK || !strings.Contains(recIndex.Body.String(), `/brisa/sdk.js`) {
@@ -161,6 +163,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 	// 2. SDK JS, Adwaita CSS, Schema JSON, TypeScript SDK, and Inspector HTML
 	for _, endpoint := range []string{"/brisa/adwaita.css", "/brisa/sdk.js", "/brisa/schema.json", "/brisa/types.d.ts", "/brisa/inspector"} {
 		r := httptest.NewRequest(http.MethodGet, endpoint, nil)
+		r.Host = "127.0.0.1"
+
 		w := httptest.NewRecorder()
 		app.ServeHTTP(w, r)
 		if w.Code != http.StatusOK || w.Body.Len() == 0 {
@@ -174,6 +178,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 		"payload": map[string]any{"name": "Carlos"},
 	})
 	unauthReq := httptest.NewRequest(http.MethodPost, "/brisa/rpc", bytes.NewReader(body))
+	unauthReq.Host = "127.0.0.1"
+
 	unauthRec := httptest.NewRecorder()
 	app.ServeHTTP(unauthRec, unauthReq)
 	if unauthRec.Code != http.StatusForbidden {
@@ -182,6 +188,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 
 	// 4. Calling /brisa/rpc WITH valid X-Brisa-Token succeeds
 	authReq := httptest.NewRequest(http.MethodPost, "/brisa/rpc", bytes.NewReader(body))
+	authReq.Host = "127.0.0.1"
+
 	authReq.Header.Set("X-Brisa-Token", app.Token())
 	authRec := httptest.NewRecorder()
 	app.ServeHTTP(authRec, authReq)
@@ -195,6 +203,8 @@ func TestHTTPRPCBridgeAndSecurityToken(t *testing.T) {
 		{"command": "greet", "payload": map[string]any{"name": ""}}, // validation failure
 	})
 	batchReq := httptest.NewRequest(http.MethodPost, "/brisa/rpc/batch", bytes.NewReader(batchBody))
+	batchReq.Host = "127.0.0.1"
+
 	batchReq.Header.Set("X-Brisa-Token", app.Token())
 	batchRec := httptest.NewRecorder()
 	app.ServeHTTP(batchRec, batchReq)
@@ -366,6 +376,7 @@ func TestThemesAdwaitaAndUbuntu(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil)
+	req.Host = "127.0.0.1"
 	rec := httptest.NewRecorder()
 	app.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "#e95420") {
@@ -379,14 +390,18 @@ func TestThemesAdwaitaAndUbuntu(t *testing.T) {
 	}
 
 	recAdw := httptest.NewRecorder()
-	app.ServeHTTP(recAdw, httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil))
+	reqAdw := httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil)
+	reqAdw.Host = "127.0.0.1"
+	app.ServeHTTP(recAdw, reqAdw)
 	if recAdw.Code != http.StatusOK || !strings.Contains(recAdw.Body.String(), "#3584e4") {
 		t.Fatalf("expected GNOME Adwaita blue (#3584e4) in CSS, got status=%d", recAdw.Code)
 	}
 
 	// Direct /brisa/ubuntu.css endpoint always returns Ubuntu Yaru CSS
 	recUbu := httptest.NewRecorder()
-	app.ServeHTTP(recUbu, httptest.NewRequest(http.MethodGet, "/brisa/ubuntu.css", nil))
+	reqUbu := httptest.NewRequest(http.MethodGet, "/brisa/ubuntu.css", nil)
+	reqUbu.Host = "127.0.0.1"
+	app.ServeHTTP(recUbu, reqUbu)
 	if recUbu.Code != http.StatusOK || !strings.Contains(recUbu.Body.String(), "#e95420") {
 		t.Fatalf("expected Ubuntu Yaru CSS on /brisa/ubuntu.css, got status=%d", recUbu.Code)
 	}

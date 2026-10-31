@@ -594,6 +594,11 @@ func (a *App) InspectorSpec() InspectorSpec {
 // ServeHTTP implements http.Handler for the Brisa loopback server and httptest.
 func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Security headers for desktop webview isolation
+	if !a.isAllowedHost(r.Host) {
+		http.Error(w, "Forbidden host", http.StatusForbidden)
+		return
+	}
+
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 
@@ -668,6 +673,21 @@ func (a *App) checkSecurityToken(r *http.Request) bool {
 		return false
 	}
 	return subtle.ConstantTimeCompare([]byte(tok), []byte(a.token)) == 1
+}
+
+// isAllowedHost only accepts localhost and loopback IPs (127.0.0.1, ::1).
+// This blocks DNS rebinding, where the browser sends "Host: attacker.example".
+func (a *App) isAllowedHost(hostport string) bool {
+	host := hostport
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
+		host = h
+	}
+	host = strings.Trim(host, "[]")
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 type rpcRequestEnvelope struct {
