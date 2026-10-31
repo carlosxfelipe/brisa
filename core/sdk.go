@@ -366,7 +366,7 @@ func (a *App) GenerateTypeScriptSDK() string {
 
 	cmds := make([]CommandSchema, len(spec.Commands))
 	copy(cmds, spec.Commands)
-	sort.Slice(cmds, func(i, j int) bool { return cmds[i].Name < cmds[i].Name })
+	sort.Slice(cmds, func(i, j int) bool { return cmds[i].Name < cmds[j].Name })
 
 	for _, c := range cmds {
 		inType := "void | Record<string, never>"
@@ -378,9 +378,9 @@ func (a *App) GenerateTypeScriptSDK() string {
 			outType = c.Output.TSType
 		}
 		if c.Summary != "" {
-			sb.WriteString(fmt.Sprintf("  /** %s */\n", c.Summary))
+			fmt.Fprintf(&sb, "  /** %s */\n", c.Summary)
 		}
-		sb.WriteString(fmt.Sprintf("  %q: { input: %s; output: %s };\n", c.Name, inType, outType))
+		fmt.Fprintf(&sb, "  %q: { input: %s; output: %s };\n", c.Name, inType, outType)
 	}
 	sb.WriteString("}\n\n")
 	sb.WriteString(`export interface BrisaSDK {

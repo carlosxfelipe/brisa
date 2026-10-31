@@ -171,3 +171,28 @@ func TestRejectsForeignHost(t *testing.T) {
 		t.Fatalf("expected 200 OK for configured Addr host, got %d", w.Code)
 	}
 }
+
+func TestGenerateTypeScriptSDKSortsCommands(t *testing.T) {
+	app := New(Config{
+		AppID:   "com.test.sdk",
+		Title:   "SDK Test",
+		Version: "1.0.0",
+		Store:   StoreOptions{MemoryOnly: true},
+	})
+	noop := func(ctx *Context) error { return nil }
+	app.RegisterCommand("zebra.run", noop, CommandDoc{Summary: "Zebra command"})
+	app.RegisterCommand("alpha.run", noop, CommandDoc{Summary: "Alpha command"})
+	app.RegisterCommand("middle.run", noop, CommandDoc{})
+
+	dts := app.GenerateTypeScriptSDK()
+	idxAlpha := strings.Index(dts, `"alpha.run"`)
+	idxMiddle := strings.Index(dts, `"middle.run"`)
+	idxZebra := strings.Index(dts, `"zebra.run"`)
+
+	if idxAlpha == -1 || idxMiddle == -1 || idxZebra == -1 {
+		t.Fatalf("expected all registered commands in generated TypeScript SDK:\n%s", dts)
+	}
+	if !(idxAlpha < idxMiddle && idxMiddle < idxZebra) {
+		t.Fatalf("expected commands sorted alphabetically, got order alpha=%d middle=%d zebra=%d:\n%s", idxAlpha, idxMiddle, idxZebra, dts)
+	}
+}
