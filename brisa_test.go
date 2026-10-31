@@ -445,4 +445,27 @@ func TestThemesAdwaitaAndUbuntu(t *testing.T) {
 	if recMacDirect.Code != http.StatusOK || !strings.Contains(recMacDirect.Body.String(), "#0a84ff") {
 		t.Fatalf("expected macOS CSS on /brisa/macos.css, got status=%d", recMacDirect.Code)
 	}
+
+	// Switch to Windows 11 theme in Go code
+	app.SetTheme(brisa.ThemeWindows)
+	if app.Theme() != brisa.ThemeWindows {
+		t.Fatalf("expected ThemeWindows after SetTheme, got %q", app.Theme())
+	}
+
+	recWin := httptest.NewRecorder()
+	reqWin := httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil)
+	reqWin.Host = "127.0.0.1"
+	app.ServeHTTP(recWin, reqWin)
+	if recWin.Code != http.StatusOK || !strings.Contains(recWin.Body.String(), "#0067c0") {
+		t.Fatalf("expected Windows 11 Fluent blue (#0067c0) in CSS, got status=%d", recWin.Code)
+	}
+
+	// Direct /brisa/windows.css endpoint always returns Windows 11 CSS
+	recWinDirect := httptest.NewRecorder()
+	reqWinDirect := httptest.NewRequest(http.MethodGet, "/brisa/windows.css", nil)
+	reqWinDirect.Host = "127.0.0.1"
+	app.ServeHTTP(recWinDirect, reqWinDirect)
+	if recWinDirect.Code != http.StatusOK || !strings.Contains(recWinDirect.Body.String(), "#0067c0") {
+		t.Fatalf("expected Windows 11 CSS on /brisa/windows.css, got status=%d", recWinDirect.Code)
+	}
 }

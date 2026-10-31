@@ -20,6 +20,8 @@ func NormalizeTheme(theme Theme) Theme {
 		return ThemePlasma
 	case "macos", "darwin", "aqua", "mac":
 		return ThemeMacOS
+	case "windows", "win11", "fluent", "winui":
+		return ThemeWindows
 	default:
 		return ThemeAdwaita
 	}
@@ -116,6 +118,8 @@ func RenderThemeCSS(theme Theme) string {
 		tokens = plasmaThemeTokens
 	case ThemeMacOS:
 		tokens = macosThemeTokens
+	case ThemeWindows:
+		tokens = windowsThemeTokens
 	default:
 		tokens = adwaitaThemeTokens
 	}

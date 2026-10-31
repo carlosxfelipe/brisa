@@ -623,6 +623,11 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.WriteString(w, RenderMacOSCSS())
 		return
 
+	case "/brisa/windows.css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+		_, _ = io.WriteString(w, RenderWindowsCSS())
+		return
+
 	case "/brisa/sdk.js":
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
