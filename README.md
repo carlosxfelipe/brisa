@@ -212,6 +212,7 @@ app := brisa.New(brisa.Config{
 	// - brisa.ThemeAdwaita: GNOME 50 / GTK4 Libadwaita (Adwaita Blue #3584e4, Cantarell, 9px/12px radii)
 	// - brisa.ThemeUbuntu:  Canonical Ubuntu Yaru GTK4 (Ubuntu Orange #E95420, Ubuntu Sans, 6px/8px radii)
 	// - brisa.ThemePlasma:  KDE Plasma Breeze (Breeze Blue #3daee9, Noto Sans, 5px/6px radii)
+	// - brisa.ThemeMacOS:   Apple macOS Aqua (System Blue #0a84ff/#007aff, SF Pro, 8px/11px radii)
 	Theme: brisa.ThemeUbuntu,
 })
 ```

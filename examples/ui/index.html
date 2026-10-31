@@ -419,6 +419,8 @@
         document.getElementById("theme-pill").textContent = "GTK4 / Yaru";
       } else if (window.brisa && brisa.theme === "plasma") {
         document.getElementById("theme-pill").textContent = "KDE / Breeze";
+      } else if (window.brisa && brisa.theme === "macos") {
+        document.getElementById("theme-pill").textContent = "macOS / Aqua";
       }
       const info = await brisa.call.system.info();
       document.getElementById("os-pill").textContent = info.os + "/" + info.arch + " • " + info.goVersion;

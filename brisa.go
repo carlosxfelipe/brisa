@@ -56,6 +56,7 @@ const (
 	ThemeAdwaita = core.ThemeAdwaita
 	ThemeUbuntu  = core.ThemeUbuntu
 	ThemePlasma  = core.ThemePlasma
+	ThemeMacOS   = core.ThemeMacOS
 )
 
 // New initializes and returns a new Brisa desktop application instance.

@@ -422,4 +422,27 @@ func TestThemesAdwaitaAndUbuntu(t *testing.T) {
 	if recPlasmaDirect.Code != http.StatusOK || !strings.Contains(recPlasmaDirect.Body.String(), "#3daee9") {
 		t.Fatalf("expected KDE Plasma CSS on /brisa/plasma.css, got status=%d", recPlasmaDirect.Code)
 	}
+
+	// Switch to macOS theme in Go code
+	app.SetTheme(brisa.ThemeMacOS)
+	if app.Theme() != brisa.ThemeMacOS {
+		t.Fatalf("expected ThemeMacOS after SetTheme, got %q", app.Theme())
+	}
+
+	recMac := httptest.NewRecorder()
+	reqMac := httptest.NewRequest(http.MethodGet, "/brisa/adwaita.css", nil)
+	reqMac.Host = "127.0.0.1"
+	app.ServeHTTP(recMac, reqMac)
+	if recMac.Code != http.StatusOK || !strings.Contains(recMac.Body.String(), "#0a84ff") {
+		t.Fatalf("expected macOS system blue (#0a84ff) in CSS, got status=%d", recMac.Code)
+	}
+
+	// Direct /brisa/macos.css endpoint always returns macOS CSS
+	recMacDirect := httptest.NewRecorder()
+	reqMacDirect := httptest.NewRequest(http.MethodGet, "/brisa/macos.css", nil)
+	reqMacDirect.Host = "127.0.0.1"
+	app.ServeHTTP(recMacDirect, reqMacDirect)
+	if recMacDirect.Code != http.StatusOK || !strings.Contains(recMacDirect.Body.String(), "#0a84ff") {
+		t.Fatalf("expected macOS CSS on /brisa/macos.css, got status=%d", recMacDirect.Code)
+	}
 }
