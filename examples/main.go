@@ -65,7 +65,7 @@ func main() {
 		Title:        "Brisa Desktop Studio",
 		Version:      "1.0.0",
 		Description:  "Zero-dependency desktop application powered by Brisa.",
-		Theme:        brisa.ThemeUbuntu, // Switch to brisa.ThemeAdwaita for GNOME Libadwaita
+		Theme:        brisa.ThemeUbuntu, // Default: brisa.ThemeAdwaita
 		Assets:       uiAssets,
 		AssetsSubDir: "ui",
 		Window: brisa.WindowConfig{

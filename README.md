@@ -102,7 +102,7 @@ func main() {
 	app := brisa.New(brisa.Config{
 		AppID: "com.example.hello",
 		Title: "Hello Brisa",
-		Theme: brisa.ThemeUbuntu, // or brisa.ThemeAdwaita (default GNOME Libadwaita)
+		Theme: brisa.ThemeUbuntu, // Default: brisa.ThemeAdwaita
 		Window: brisa.WindowConfig{
 			Width:  900,
 			Height: 580,

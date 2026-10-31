@@ -46,7 +46,7 @@ func main() {
 		IndexHTML:          "",                   // Optional inline HTML when Assets is nil
 		DevServerURL:       "",                   // Optional reverse proxy for Vite/frontend dev server
 		InspectorURL:       "/brisa/inspector",   // Default: "/brisa/inspector" (set "-" to disable)
-		Theme:              brisa.ThemeAdwaita,   // Default: brisa.ThemeAdwaita (or brisa.ThemeUbuntu, brisa.ThemePlasma, brisa.ThemeMacOS, brisa.ThemeWindows)
+		Theme:              brisa.ThemeAdwaita,   // Default: brisa.ThemeAdwaita
 		DisableAdwaitaCSS:  false,                // Default: false (auto-injects /brisa/adwaita.css)
 		DisableCSRFToken:   false,                // Default: false (enforces X-Brisa-Token on /brisa/rpc)
 		SilenceTagWarnings: false,                // Set true to suppress non-fatal startup validation tag warnings
@@ -199,10 +199,16 @@ Inside any command handler or middleware:
 
 ---
 
-## 6. Built-in GNOME 50 / GTK4 Libadwaita & Ubuntu Yaru UI Kit (`/brisa/adwaita.css`)
+## 6. Built-in Desktop UI Kit & Themes
 
-Unless `DisableAdwaitaCSS: true` is set, Brisa automatically injects `/brisa/adwaita.css` into `index.html`.
-- **Code-Configured UI Flavor (`Theme`)**: Choose between `brisa.ThemeAdwaita` (default GNOME Libadwaita `#3584e4`, `9px`/`12px` radii, `"Cantarell"`), `brisa.ThemeUbuntu` (Canonical Ubuntu Yaru GTK4 `#e95420`, `6px`/`8px` radii, `"Ubuntu Sans"`, Yaru dark/light surfaces), `brisa.ThemePlasma` (KDE Plasma Breeze `#3daee9`, `5px`/`6px` radii, `"Noto Sans"`, Breeze dark/light surfaces), `brisa.ThemeMacOS` (Apple macOS Aqua `#0a84ff`/`#007aff`, `8px`/`11px` radii, `"SF Pro"`, macOS dark/light surfaces), and `brisa.ThemeWindows` (Microsoft Windows 11 Fluent `#0067c0`/`#60cdff`, `4px`/`8px` radii, `"Segoe UI Variable"`, WinUI 3 dark/light surfaces) via `Config.Theme` or `app.SetTheme(...)`.
+Unless `DisableAdwaitaCSS: true` is set, Brisa automatically injects its built-in stylesheet (`/brisa/adwaita.css` or `/brisa/theme.css`) into `index.html`. All HTML layout and component classes work identically across all themes.
+
+- **Configuring a Theme (`Config.Theme` or `app.SetTheme(...)`)**:
+  - `brisa.ThemeAdwaita` (`"adwaita"`, default): GNOME 50 / GTK4 Libadwaita (`#3584e4`, `"Cantarell"`, `9px`/`12px` radii).
+  - `brisa.ThemeUbuntu` (`"ubuntu"` / `"yaru"`): Canonical Ubuntu Yaru GTK4 (`#e95420`, `"Ubuntu Sans"`, `6px`/`8px` radii, `/brisa/ubuntu.css`).
+  - `brisa.ThemePlasma` (`"plasma"` / `"kde"` / `"breeze"`): KDE Plasma Breeze (`#3daee9`, `"Noto Sans"`, `5px`/`6px` radii, `/brisa/plasma.css`).
+  - `brisa.ThemeMacOS` (`"macos"` / `"darwin"` / `"aqua"` / `"mac"`): Apple macOS (`#0a84ff` / `#007aff`, `"SF Pro"`, `8px`/`11px` radii, `/brisa/macos.css`).
+  - `brisa.ThemeWindows` (`"windows"` / `"win11"` / `"fluent"` / `"winui"`): Microsoft Windows 11 Fluent / WinUI 3 (`#0067c0` / `#60cdff`, `"Segoe UI Variable"`, `4px`/`8px` radii, `/brisa/windows.css`).
 - **OS-Governed Color Scheme**: Never add manual theme-toggle buttons in the UI. Light/Dark mode is strictly governed by the OS (`:root` dark tokens + `@media (prefers-color-scheme: light)` + `:root[data-os-theme="light"]` updated in `<1ms` via `stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme`).
 - **Standard Layout Classes**:
   - `.adw-split-view`: 2-column grid (`256px` `.adw-sidebar` + `1fr` `.adw-content-view`).
