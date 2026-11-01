@@ -225,12 +225,31 @@ html, body {
 }
 
 .adw-clamp {
-  max-width: 680px;
+  width: 100%;
+  max-width: var(--clamp-max-width, 860px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 26px;
 }
+
+@media (min-width: 1400px) {
+  .adw-clamp {
+    max-width: var(--clamp-max-width, 1024px);
+  }
+}
+
+@media (min-width: 1800px) {
+  .adw-clamp {
+    max-width: var(--clamp-max-width, 1200px);
+  }
+}
+
+.adw-clamp.tight { max-width: 680px; }
+.adw-clamp.medium { max-width: 860px; }
+.adw-clamp.large { max-width: 1024px; }
+.adw-clamp.wide { max-width: 1200px; }
+.adw-clamp.full { max-width: 100%; }
 
 .adw-group {
   display: flex;

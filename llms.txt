@@ -547,7 +547,7 @@ CSS endpoints: `/brisa/theme.css` (active theme, auto-injected), plus `/brisa/ad
   <section class="adw-content-view">
     <header class="adw-toolbar">Title …actions</header>
     <main class="adw-page">
-      <div class="adw-clamp">                <!-- centered 680px column -->
+      <div class="adw-clamp">                <!-- centered responsive column (860px-1200px) -->
         <div class="adw-group">
           <div class="adw-group-title">Section</div>
           <div class="adw-group-desc">Description</div>
