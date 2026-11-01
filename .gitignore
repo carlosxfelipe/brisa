@@ -6,6 +6,8 @@ bin/
 *.so
 *.dylib
 *.app/
+*.AppImage
+*.AppDir/
 
 # Test binary, built with `go test -c`
 *.test
