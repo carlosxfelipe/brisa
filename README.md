@@ -223,7 +223,7 @@ app := brisa.New(brisa.Config{
 ```
 
 - **OS-Governed Light & Dark Mode**: Light and Dark modes are strictly controlled by the operating system (`org.gnome.desktop.interface color-scheme` on GNOME/Ubuntu, `AppleInterfaceStyle` on macOS, `AppsUseLightTheme` on Windows), repainting in the exact same frame as the native window headerbar.
-- **Custom CSS Mode**: Set `DisableAdwaitaCSS: true` in `brisa.Config` if you prefer to bring your own stylesheet from scratch.
+- **Custom CSS Mode**: Set `DisableThemeCSS: true` in `brisa.Config` if you prefer to bring your own stylesheet (Tailwind, Bootstrap, etc.) from scratch.
 
 ---
 

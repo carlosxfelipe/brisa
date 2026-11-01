@@ -39,7 +39,8 @@ type Config struct {
 	DevServerURL       string
 	InspectorURL       string
 	Theme              Theme
-	DisableAdwaitaCSS  bool
+	DisableThemeCSS    bool
+	DisableAdwaitaCSS  bool // Deprecated: use DisableThemeCSS instead.
 	DisableCSRFToken   bool
 	SilenceTagWarnings bool
 	Window             WindowConfig
@@ -936,11 +937,15 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	if len(a.iconBytes) > 0 && !bytes.Contains(htmlBytes, []byte(`rel="icon"`)) {
 		snippet.WriteString(`<link rel="icon" type="image/png" sizes="512x512" href="/brisa/icon.png"><link rel="apple-touch-icon" href="/brisa/icon.png">`)
 	}
-	if !a.config.DisableAdwaitaCSS &&
+	disabledCSS := a.config.DisableThemeCSS || a.config.DisableAdwaitaCSS
+	if !disabledCSS &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/adwaita.css")) &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/ubuntu.css")) &&
+		!bytes.Contains(htmlBytes, []byte("/brisa/plasma.css")) &&
+		!bytes.Contains(htmlBytes, []byte("/brisa/macos.css")) &&
+		!bytes.Contains(htmlBytes, []byte("/brisa/windows.css")) &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/theme.css")) {
-		snippet.WriteString(`<link rel="stylesheet" href="/brisa/adwaita.css">`)
+		snippet.WriteString(`<link rel="stylesheet" href="/brisa/theme.css">`)
 	}
 	snippet.WriteString(`<script src="/brisa/sdk.js"></script>`)
 	scriptTag := []byte(snippet.String())

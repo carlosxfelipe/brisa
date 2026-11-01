@@ -57,7 +57,7 @@ func main() {
 		DevServerURL:       "",                   // Optional reverse proxy for Vite/frontend dev server
 		InspectorURL:       "/brisa/inspector",   // Default: "/brisa/inspector" (set "-" to disable)
 		Theme:              brisa.ThemeAdwaita,   // Default: brisa.ThemeAdwaita
-		DisableAdwaitaCSS:  false,                // Default: false (auto-injects built-in theme CSS)
+		DisableThemeCSS:    false,                // Default: false (set true to disable built-in theme CSS)
 		DisableCSRFToken:   false,                // Default: false (enforces X-Brisa-Token on RPC)
 		SilenceTagWarnings: false,                // Suppresses non-fatal startup tag warnings
 		Window: brisa.WindowConfig{
@@ -333,7 +333,7 @@ func AuditMiddleware() brisa.MiddlewareFunc {
 
 ## 6. Built-in Desktop UI Kit & Themes
 
-Brisa includes a lightweight, pre-configured CSS design kit. Unless `DisableAdwaitaCSS: true` is set, Brisa automatically injects `/brisa/theme.css` into `index.html`.
+Brisa includes a lightweight, pre-configured CSS design kit. Unless `DisableThemeCSS: true` is set, Brisa automatically injects `/brisa/theme.css` into `index.html`.
 
 - **5 Built-in Themes (`Config.Theme` or `app.SetTheme(...)`)**:
   - `brisa.ThemeAdwaita` (`"adwaita"`, default): GNOME 50 / GTK4 Libadwaita (`#3584e4`, `"Cantarell"`, `9px`/`12px` radii).
