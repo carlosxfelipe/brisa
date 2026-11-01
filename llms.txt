@@ -464,7 +464,7 @@ save, _ := d.SaveFile(brisa.FileDialogOptions{DefaultName: "out.txt"})
 // Clipboard
 app.Clipboard().WriteText("hi"); text, _ := app.Clipboard().ReadText()
 
-// Notifications (on macOS they are sent in-process so the app's own icon is shown)
+// Notifications (native OS notification; also emitted as "brisa:notification" event to UI)
 app.Notify(brisa.NotificationOptions{Title: "Hi", Body: "…", Subtitle: "", Icon: "", Urgency: "normal"})
 
 // Open URL / file in default app
