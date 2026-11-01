@@ -611,49 +611,24 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 
 	switch r.URL.Path {
-	case "/brisa/adwaita.css", "/brisa/theme.css":
+	case "/brisa/theme.css", "/brisa/adwaita.css", "/brisa/ubuntu.css", "/brisa/plasma.css", "/brisa/macos.css", "/brisa/windows.css":
 		if a.config.DisableThemeCSS {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		_, _ = io.WriteString(w, RenderThemeCSS(a.Theme()))
-		return
-
-	case "/brisa/ubuntu.css":
-		if a.config.DisableThemeCSS {
-			w.WriteHeader(http.StatusNotFound)
-			return
+		theme := a.Theme()
+		switch r.URL.Path {
+		case "/brisa/ubuntu.css":
+			theme = ThemeUbuntu
+		case "/brisa/plasma.css":
+			theme = ThemePlasma
+		case "/brisa/macos.css":
+			theme = ThemeMacOS
+		case "/brisa/windows.css":
+			theme = ThemeWindows
 		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		_, _ = io.WriteString(w, RenderUbuntuCSS())
-		return
-
-	case "/brisa/plasma.css":
-		if a.config.DisableThemeCSS {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		_, _ = io.WriteString(w, RenderPlasmaCSS())
-		return
-
-	case "/brisa/macos.css":
-		if a.config.DisableThemeCSS {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		_, _ = io.WriteString(w, RenderMacOSCSS())
-		return
-
-	case "/brisa/windows.css":
-		if a.config.DisableThemeCSS {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		_, _ = io.WriteString(w, RenderWindowsCSS())
+		_, _ = io.WriteString(w, RenderThemeCSS(theme))
 		return
 
 	case "/brisa/icon.png", "/favicon.ico":
@@ -956,13 +931,7 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	if len(a.iconBytes) > 0 && !bytes.Contains(htmlBytes, []byte(`rel="icon"`)) {
 		snippet.WriteString(`<link rel="icon" type="image/png" sizes="512x512" href="/brisa/icon.png"><link rel="apple-touch-icon" href="/brisa/icon.png">`)
 	}
-	if !a.config.DisableThemeCSS &&
-		!bytes.Contains(htmlBytes, []byte("/brisa/adwaita.css")) &&
-		!bytes.Contains(htmlBytes, []byte("/brisa/ubuntu.css")) &&
-		!bytes.Contains(htmlBytes, []byte("/brisa/plasma.css")) &&
-		!bytes.Contains(htmlBytes, []byte("/brisa/macos.css")) &&
-		!bytes.Contains(htmlBytes, []byte("/brisa/windows.css")) &&
-		!bytes.Contains(htmlBytes, []byte("/brisa/theme.css")) {
+	if !a.config.DisableThemeCSS && !hasThemeStylesheet(htmlBytes) {
 		snippet.WriteString(`<link rel="stylesheet" href="/brisa/theme.css">`)
 	}
 	snippet.WriteString(`<script src="/brisa/sdk.js"></script>`)
@@ -979,6 +948,23 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	out.Write(scriptTag)
 	out.Write(htmlBytes)
 	return out.Bytes()
+}
+
+func hasThemeStylesheet(html []byte) bool {
+	themePaths := []string{
+		"/brisa/theme.css",
+		"/brisa/adwaita.css",
+		"/brisa/ubuntu.css",
+		"/brisa/plasma.css",
+		"/brisa/macos.css",
+		"/brisa/windows.css",
+	}
+	for _, p := range themePaths {
+		if bytes.Contains(html, []byte(p)) {
+			return true
+		}
+	}
+	return false
 }
 
 func resolveAppIcon(icon string, rawAssets, subAssets fs.FS) ([]byte, string) {
