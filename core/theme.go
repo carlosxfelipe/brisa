@@ -22,6 +22,8 @@ func NormalizeTheme(theme Theme) Theme {
 		return ThemeMacOS
 	case "windows", "win11", "fluent", "winui":
 		return ThemeWindows
+	case "coke", "coca", "cocacola", "coca-cola":
+		return ThemeCoke
 	default:
 		return ThemeAdwaita
 	}
@@ -120,6 +122,8 @@ func RenderThemeCSS(theme Theme) string {
 		tokens = macosThemeTokens
 	case ThemeWindows:
 		tokens = windowsThemeTokens
+	case ThemeCoke:
+		tokens = cokeThemeTokens
 	default:
 		tokens = adwaitaThemeTokens
 	}

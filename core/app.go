@@ -611,7 +611,7 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Frame-Options", "SAMEORIGIN")
 
 	switch r.URL.Path {
-	case "/brisa/theme.css", "/brisa/adwaita.css", "/brisa/ubuntu.css", "/brisa/plasma.css", "/brisa/macos.css", "/brisa/windows.css":
+	case "/brisa/theme.css", "/brisa/adwaita.css", "/brisa/ubuntu.css", "/brisa/plasma.css", "/brisa/macos.css", "/brisa/windows.css", "/brisa/coke.css":
 		if a.config.DisableThemeCSS {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -626,6 +626,8 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			theme = ThemeMacOS
 		case "/brisa/windows.css":
 			theme = ThemeWindows
+		case "/brisa/coke.css":
+			theme = ThemeCoke
 		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderThemeCSS(theme))
@@ -958,6 +960,7 @@ func hasThemeStylesheet(html []byte) bool {
 		"/brisa/plasma.css",
 		"/brisa/macos.css",
 		"/brisa/windows.css",
+		"/brisa/coke.css",
 	}
 	for _, p := range themePaths {
 		if bytes.Contains(html, []byte(p)) {

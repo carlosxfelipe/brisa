@@ -581,6 +581,8 @@
         document.getElementById("theme-pill").textContent = "macOS / Aqua";
       } else if (window.brisa && brisa.theme === "windows") {
         document.getElementById("theme-pill").textContent = "Win11 / Fluent";
+      } else if (window.brisa && brisa.theme === "coke") {
+        document.getElementById("theme-pill").textContent = "Coke Red";
       }
       const info = await brisa.call.system.info();
       document.getElementById("os-pill").textContent = info.os + "/" + info.arch + " • " + info.goVersion;

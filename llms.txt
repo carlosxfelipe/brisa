@@ -527,10 +527,11 @@ Set `Config.Theme` and use the shared component classes. The same class names wo
 | `brisa.ThemePlasma` | `plasma`, `kde`, `breeze` | KDE Breeze |
 | `brisa.ThemeMacOS` | `macos`, `darwin`, `aqua`, `mac` | macOS |
 | `brisa.ThemeWindows` | `windows`, `win11`, `fluent`, `winui` | Windows 11 Fluent |
+| `brisa.ThemeCoke` | `coke`, `coca`, `cocacola`, `coca-cola` | Coke Red (Libadwaita base) |
 
 Light/dark mode is governed by the operating system only. The SDK sets `data-os-theme="light|dark"` and `data-ui-theme="<theme>"` on `<html>` and follows OS changes live. Do NOT build an in-app light/dark toggle, and do not show fake "dark mode" switches.
 
-CSS endpoints: `/brisa/theme.css` (active theme, auto-injected), plus `/brisa/adwaita.css`, `/brisa/ubuntu.css`, `/brisa/plasma.css`, `/brisa/macos.css`, `/brisa/windows.css` (fixed themes; adwaita.css is an alias of the active theme). If your HTML already links any of these, Brisa does not inject another one.
+CSS endpoints: `/brisa/theme.css` (active theme, auto-injected), plus `/brisa/adwaita.css`, `/brisa/ubuntu.css`, `/brisa/plasma.css`, `/brisa/macos.css`, `/brisa/windows.css`, `/brisa/coke.css` (fixed themes; adwaita.css is an alias of the active theme). If your HTML already links any of these, Brisa does not inject another one.
 
 ### Layout classes
 

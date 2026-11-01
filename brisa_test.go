@@ -472,4 +472,38 @@ func TestThemesAdwaitaAndUbuntu(t *testing.T) {
 	if recWinDirect.Code != http.StatusOK || !strings.Contains(recWinDirect.Body.String(), "#0067c0") {
 		t.Fatalf("expected Windows 11 CSS on /brisa/windows.css, got status=%d", recWinDirect.Code)
 	}
+
+	// Switch to Coke theme in Go code
+	app.SetTheme(brisa.ThemeCoke)
+	if app.Theme() != brisa.ThemeCoke {
+		t.Fatalf("expected ThemeCoke after SetTheme, got %q", app.Theme())
+	}
+
+	recCoke := httptest.NewRecorder()
+	reqCoke := httptest.NewRequest(http.MethodGet, "/brisa/theme.css", nil)
+	reqCoke.Host = "127.0.0.1"
+	app.ServeHTTP(recCoke, reqCoke)
+	if recCoke.Code != http.StatusOK || !strings.Contains(recCoke.Body.String(), "#e41e2b") {
+		t.Fatalf("expected Coke red (#e41e2b) in CSS, got status=%d", recCoke.Code)
+	}
+	if !strings.Contains(recCoke.Body.String(), "--accent-bg-color: #e41e2b") {
+		t.Fatalf("expected Coke red accent in Coke CSS")
+	}
+
+	// Direct /brisa/coke.css endpoint always returns Coke CSS
+	recCokeDirect := httptest.NewRecorder()
+	reqCokeDirect := httptest.NewRequest(http.MethodGet, "/brisa/coke.css", nil)
+	reqCokeDirect.Host = "127.0.0.1"
+	app.ServeHTTP(recCokeDirect, reqCokeDirect)
+	if recCokeDirect.Code != http.StatusOK || !strings.Contains(recCokeDirect.Body.String(), "#e41e2b") {
+		t.Fatalf("expected Coke CSS on /brisa/coke.css, got status=%d", recCokeDirect.Code)
+	}
+
+	// Verify alias normalization
+	for _, alias := range []brisa.Theme{"coke", "coca", "cocacola", "coca-cola"} {
+		app.SetTheme(alias)
+		if app.Theme() != brisa.ThemeCoke {
+			t.Fatalf("expected alias %q to normalize to ThemeCoke, got %q", alias, app.Theme())
+		}
+	}
 }

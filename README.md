@@ -9,7 +9,7 @@
 [![Go Version](https://img.shields.io/badge/go-1.26%2B-00ADD8?logo=go&logoColor=white)](go.mod)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Pattern](https://img.shields.io/badge/pattern-REPR%20IPC-blue)](https://deviq.com/design-patterns/repr-design-pattern/)
-[![UI Themes](https://img.shields.io/badge/themes-5%20Desktop%20Themes-3584e4)](core/theme.go)
+[![UI Themes](https://img.shields.io/badge/themes-6%20Desktop%20Themes-3584e4)](core/theme.go)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-success)](go.mod)
 [![CGO](<https://img.shields.io/badge/CGO-Zero%20Deps%20(Pure%20Go%20on%20Linux%2FWin)-purple>)](go.mod)
 
@@ -17,7 +17,7 @@
 
 **Brisa** is an ultra-lightweight desktop application micro-framework for Go with **zero external dependencies**, featuring **100% pure Go compilation (`CGO_ENABLED=0`) on Linux & Windows** and a **native Apple WebKit engine on macOS**.
 
-Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Brisa brings the **REPR Design Pattern (Request-Endpoint-Response)** to desktop IPC and ships with **5 built-in desktop themes** (GNOME Libadwaita, Ubuntu Yaru, KDE Plasma, macOS Aqua, and Windows 11 Fluent) that synchronize instantaneously with your operating system's Light and Dark mode—without bundling 150MB+ of Electron/Node.js or requiring heavy CGO toolchains on Linux & Windows.
+Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Brisa brings the **REPR Design Pattern (Request-Endpoint-Response)** to desktop IPC and ships with **6 built-in themes** (GNOME Libadwaita, Ubuntu Yaru, KDE Plasma, macOS Aqua, Windows 11 Fluent, and Coke Red) that synchronize instantaneously with your operating system's Light and Dark mode—without bundling 150MB+ of Electron/Node.js or requiring heavy CGO toolchains on Linux & Windows.
 
 <p align="center">
   <img src="preview/dark.png" alt="Brisa Dark Mode" width="49%">
@@ -29,7 +29,7 @@ Built by the creator of [Gota 💧](https://github.com/carlosxfelipe/gota), Bris
 ## ✨ Key Features
 
 - **Zero External Dependencies & Multiplatform Engine**: Built 100% on the Go standard library with zero external `go.mod` dependencies. Uses **100% Pure Go (`CGO_ENABLED=0`)** on Linux & Windows via Chromium/CDP, and native **Apple WebKit (`WKWebView`)** on macOS for a 100% native desktop experience.
-- **Built-in Desktop UI Kit & 5 Themes**: Ships with 5 pre-configured desktop themes (GNOME Libadwaita, Ubuntu Yaru, KDE Plasma Breeze, macOS Aqua, Windows 11 Fluent) providing ready-to-use CSS components (`.adw-split-view`, `.boxed-list`, `.adw-row`, `.adw-entry-input`, `.gtk-btn`, `.suggested-action`, etc.) crafted to match each desktop environment's look & feel.
+- **Built-in Desktop UI Kit & 6 Themes**: Ships with 6 pre-configured themes (GNOME Libadwaita, Ubuntu Yaru, KDE Plasma Breeze, macOS Aqua, Windows 11 Fluent, Coke Red) providing ready-to-use CSS components (`.adw-split-view`, `.boxed-list`, `.adw-row`, `.adw-entry-input`, `.gtk-btn`, `.suggested-action`, etc.) crafted to match each desktop environment's look & feel.
 - **OS-Governed Light & Dark Mode (<1ms Latency)**: Strictly governed by the operating system—synchronizes in real time with GNOME (`stdbuf -oL gsettings monitor org.gnome.desktop.interface color-scheme`), macOS (`AppleInterfaceStyle`), Windows Registry, and `@media (prefers-color-scheme)`.
 - **REPR Desktop IPC Bridge**: Typed command registration (`brisa.Bind`, `brisa.BindEndpoint`, `brisa.BindService`) with automatic JSON payload binding and declarative struct tag validation (`validate:"required,min=3,oneof=..."`).
 - **Auto-Generated JS & TypeScript SDK**: Serves `/brisa/sdk.js` at runtime (automatically injected into `index.html`) exposing `brisa.call.<group>.<command>()`, `brisa.invoke()`, `brisa.batch()`, and generates `.d.ts` definitions at `/brisa/types.d.ts`.
@@ -58,7 +58,7 @@ Traditional desktop web frameworks like **Electron** bundle an entire copy of Ch
 | **Requires CGO / C Compiler** | N/A              | Yes (`gcc`, GTK/WebKit headers)  | **No on Linux/Windows (`CGO_ENABLED=0`)**; Native on macOS       |
 | **Browser Engine**            | Bundled per app  | OS WebKit / WebView2 (via C FFI) | **Native WKWebView (macOS) / System Chromium (Linux & Windows)** |
 | **IPC Architecture**          | Untyped channels | Custom / reflection bindings     | **Typed REPR + Auto Validation**                                 |
-| **Built-in UI Kit**           | None             | None                             | **5 Desktop Themes (GNOME, Ubuntu, Plasma, macOS, Win11)**       |
+| **Built-in UI Kit**           | None             | None                             | **6 Themes (GNOME, Ubuntu, Plasma, macOS, Win11, Coke)**         |
 
 ---
 
@@ -218,7 +218,8 @@ app := brisa.New(brisa.Config{
 	// - brisa.ThemePlasma:  KDE Plasma Breeze (Breeze Blue #3daee9, Noto Sans, 5px/6px radii)
 	// - brisa.ThemeMacOS:   Apple macOS Aqua (System Blue #0a84ff/#007aff, SF Pro, 8px/11px radii)
 	// - brisa.ThemeWindows: Microsoft Windows 11 Fluent (Fluent Blue #0067c0/#60cdff, Segoe UI Variable, 4px/8px radii)
-	Theme: brisa.ThemeUbuntu,
+	// - brisa.ThemeCoke:    Coke Red (Libadwaita base, Coke Red #e41e2b, Cantarell, 9px/12px radii)
+	Theme: brisa.ThemeCoke,
 })
 ```
 
