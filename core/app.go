@@ -40,7 +40,6 @@ type Config struct {
 	InspectorURL       string
 	Theme              Theme
 	DisableThemeCSS    bool
-	DisableAdwaitaCSS  bool // Deprecated: use DisableThemeCSS instead.
 	DisableCSRFToken   bool
 	SilenceTagWarnings bool
 	Window             WindowConfig
@@ -613,26 +612,46 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 	case "/brisa/adwaita.css", "/brisa/theme.css":
+		if a.config.DisableThemeCSS {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderThemeCSS(a.Theme()))
 		return
 
 	case "/brisa/ubuntu.css":
+		if a.config.DisableThemeCSS {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderUbuntuCSS())
 		return
 
 	case "/brisa/plasma.css":
+		if a.config.DisableThemeCSS {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderPlasmaCSS())
 		return
 
 	case "/brisa/macos.css":
+		if a.config.DisableThemeCSS {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderMacOSCSS())
 		return
 
 	case "/brisa/windows.css":
+		if a.config.DisableThemeCSS {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
 		_, _ = io.WriteString(w, RenderWindowsCSS())
 		return
@@ -937,8 +956,7 @@ func (a *App) injectBrisaRuntime(htmlBytes []byte) []byte {
 	if len(a.iconBytes) > 0 && !bytes.Contains(htmlBytes, []byte(`rel="icon"`)) {
 		snippet.WriteString(`<link rel="icon" type="image/png" sizes="512x512" href="/brisa/icon.png"><link rel="apple-touch-icon" href="/brisa/icon.png">`)
 	}
-	disabledCSS := a.config.DisableThemeCSS || a.config.DisableAdwaitaCSS
-	if !disabledCSS &&
+	if !a.config.DisableThemeCSS &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/adwaita.css")) &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/ubuntu.css")) &&
 		!bytes.Contains(htmlBytes, []byte("/brisa/plasma.css")) &&
