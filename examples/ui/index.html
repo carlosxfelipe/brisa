@@ -199,6 +199,13 @@
           </svg>
           <span>Desktop Integration</span>
         </div>
+
+        <div class="adw-nav-row" id="nav-components" onclick="switchPage('components')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span>UI Components</span>
+        </div>
       </nav>
 
       <div class="adw-sidebar-footer">
@@ -384,6 +391,157 @@
             </div>
           </div>
         </div>
+
+        <!-- PAGE 4: UI COMPONENTS SHOWCASE -->
+        <div class="adw-clamp hidden" id="page-components">
+          <!-- Switches / Toggles -->
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">Switches & Toggles</div>
+                <div class="adw-group-desc">Native Libadwaita / macOS sliding switches for settings & preferences</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Sound Alerts</div>
+                  <div class="adw-row-subtitle">Play native audio chime on desktop notifications</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <label class="adw-switch">
+                    <input type="checkbox" id="switch-sound" checked onchange="showToast('Sound Alerts: ' + (this.checked ? 'Enabled' : 'Disabled'))">
+                    <span class="adw-switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Hardware Acceleration</div>
+                  <div class="adw-row-subtitle">Use GPU rasterization for WebKit rendering</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <label class="adw-switch">
+                    <input type="checkbox" id="switch-gpu" checked onchange="showToast('Hardware Acceleration: ' + (this.checked ? 'On' : 'Off'))">
+                    <span class="adw-switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Disabled Switch</div>
+                  <div class="adw-row-subtitle">Locked by system administrator policy</div>
+                </div>
+                <div class="adw-row-suffix">
+                  <label class="adw-switch">
+                    <input type="checkbox" disabled>
+                    <span class="adw-switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Checkboxes & Radios -->
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">Checkboxes & Radio Buttons</div>
+                <div class="adw-group-desc">Themed inputs styled with the active OS accent color</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Checkboxes (Multiple Choice)</div>
+                  <div class="adw-row-subtitle">Select multiple active preferences</div>
+                </div>
+                <div class="adw-row-suffix" style="gap: 16px;">
+                  <label class="adw-check-label">
+                    <input type="checkbox" checked onchange="showToast('Auto-save: ' + this.checked)">
+                    <span>Auto-save</span>
+                  </label>
+                  <label class="adw-check-label">
+                    <input type="checkbox" checked onchange="showToast('Check for Updates: ' + this.checked)">
+                    <span>Check for Updates</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Radio Buttons (Single Choice)</div>
+                  <div class="adw-row-subtitle">Choose rendering quality profile</div>
+                </div>
+                <div class="adw-row-suffix" style="gap: 16px;">
+                  <label class="adw-radio-label">
+                    <input type="radio" name="quality" value="standard" checked onchange="showToast('Quality: Standard')">
+                    <span>Standard</span>
+                  </label>
+                  <label class="adw-radio-label">
+                    <input type="radio" name="quality" value="high" onchange="showToast('Quality: High')">
+                    <span>High</span>
+                  </label>
+                  <label class="adw-radio-label">
+                    <input type="radio" name="quality" value="ultra" onchange="showToast('Quality: Ultra')">
+                    <span>Ultra</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Range Sliders -->
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">Sliders & Range Controls</div>
+                <div class="adw-group-desc">Continuous and discrete values with themed handles</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Volume Level</div>
+                  <div class="adw-row-subtitle" id="volume-label">Current: 75%</div>
+                </div>
+                <div class="adw-row-suffix" style="width: 180px;">
+                  <input type="range" min="0" max="100" value="75" style="--range-progress: 75%;" oninput="this.style.setProperty('--range-progress', this.value + '%'); document.getElementById('volume-label').textContent = 'Current: ' + this.value + '%'">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Buttons & Actions -->
+          <div class="adw-group">
+            <div class="adw-group-header">
+              <div>
+                <div class="adw-group-title">Buttons & Action Variants</div>
+                <div class="adw-group-desc">Standard, suggested action, destructive, pill, and circular buttons</div>
+              </div>
+            </div>
+
+            <div class="boxed-list">
+              <div class="adw-row">
+                <div class="adw-row-text">
+                  <div class="adw-row-title">Button Styles</div>
+                  <div class="adw-row-subtitle">Semantic hierarchy matching desktop HIG</div>
+                </div>
+                <div class="adw-row-suffix" style="gap: 8px; flex-wrap: wrap;">
+                  <button class="gtk-btn" onclick="showToast('Normal button clicked')">Normal</button>
+                  <button class="gtk-btn suggested-action" onclick="showToast('Suggested action clicked')">Suggested</button>
+                  <button class="gtk-btn destructive-action" onclick="showToast('Destructive action clicked')">Destructive</button>
+                  <button class="gtk-btn pill" onclick="showToast('Pill button clicked')">Pill</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </section>
   </div>
@@ -405,10 +563,11 @@
       const titles = {
         tasks: "Tasks",
         telemetry: "System Resources",
-        desktop: "Desktop Integration"
+        desktop: "Desktop Integration",
+        components: "UI Components"
       };
       document.getElementById("page-title").textContent = titles[page] || "Brisa";
-      ["tasks", "telemetry", "desktop"].forEach(p => {
+      ["tasks", "telemetry", "desktop", "components"].forEach(p => {
         document.getElementById("page-" + p).classList.toggle("hidden", p !== page);
         document.getElementById("nav-" + p).classList.toggle("active", p === page);
       });

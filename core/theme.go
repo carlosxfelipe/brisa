@@ -272,7 +272,6 @@ html, body {
   font-size: 14px;
 }
 
-/* Unified GTK4 / Libadwaita 1.6+ Button & Dropdown Geometry (34px height) */
 .gtk-btn, button {
   display: inline-flex;
   align-items: center;
@@ -353,7 +352,6 @@ html, body {
   color: var(--window-fg-color);
 }
 
-/* GTK4 / Libadwaita GtkDropDown & GtkPopover Menu */
 .gtk-dropdown-wrap {
   position: relative;
   display: inline-flex;
@@ -449,5 +447,172 @@ html, body {
 
 .gtk-popover-item.selected .gtk-popover-check {
   opacity: 1;
+}
+
+.adw-switch, .gtk-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.adw-switch input, .gtk-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+  margin: 0;
+}
+
+.adw-switch-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--button-bg);
+  border: 1px solid var(--row-divider-color);
+  border-radius: 999px;
+  transition: background-color 180ms cubic-bezier(0.2, 0, 0, 1), border-color 180ms ease;
+}
+
+.adw-switch-slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1), background-color 180ms ease;
+}
+
+.adw-switch:hover .adw-switch-slider {
+  background-color: var(--button-hover-bg);
+}
+
+.adw-switch input:checked + .adw-switch-slider {
+  background-color: var(--accent-bg-color);
+  border-color: transparent;
+}
+
+.adw-switch input:checked + .adw-switch-slider::before {
+  transform: translateX(20px);
+}
+
+.adw-switch input:focus-visible + .adw-switch-slider {
+  box-shadow: var(--focus-ring);
+}
+
+.adw-switch input:disabled + .adw-switch-slider {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Checkbox & Radio Buttons */
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--accent-bg-color);
+  cursor: pointer;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.adw-check-label, .adw-radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--window-fg-color);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Range / Slider */
+input[type="range"] {
+  --range-progress: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent-bg-color) 0%,
+    var(--accent-bg-color) var(--range-progress, 50%),
+    rgba(128, 128, 128, 0.28) var(--range-progress, 50%),
+    rgba(128, 128, 128, 0.28) 100%
+  ) no-repeat;
+  background-color: rgba(128, 128, 128, 0.28);
+  background-size: 100% 100%;
+  border: 1px solid var(--row-divider-color);
+}
+
+input[type="range"]:hover::-webkit-slider-runnable-track {
+  border-color: rgba(128, 128, 128, 0.4);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.32), 0 0 0 4px var(--accent-subtle-bg, rgba(53, 132, 228, 0.2));
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--focus-ring);
+}
+
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background-color: rgba(128, 128, 128, 0.28);
+  border: 1px solid var(--row-divider-color);
+}
+
+input[type="range"]::-moz-range-progress {
+  background-color: var(--accent-bg-color);
+  height: 6px;
+  border-radius: 999px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
 }
 `
