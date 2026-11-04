@@ -146,6 +146,31 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Custom Native Desktop Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--button-bg, rgba(128, 128, 128, 0.35));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--button-hover-bg, rgba(128, 128, 128, 0.55));
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .adw-split-view {
   display: grid;
   grid-template-columns: 256px minmax(320px, 1fr);
@@ -179,6 +204,7 @@ html, body {
   flex-direction: column;
   gap: 2px;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -203,8 +229,20 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   background-color: var(--window-bg-color);
   overflow: hidden;
+}
+
+.adw-page-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .adw-toolbar {
@@ -220,7 +258,10 @@ html, body {
 
 .adw-page {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
   padding: 24px 20px 40px;
 }
 
