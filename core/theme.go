@@ -296,6 +296,23 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 24px;
+}
+
+.adw-group:last-child {
+  margin-bottom: 0;
+}
+
+.adw-clamp > .adw-group {
+  margin-bottom: 0;
+}
+
+.adw-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
 }
 
 .adw-group-title { font-size: 14px; font-weight: 700; color: var(--window-fg-color); }
@@ -321,6 +338,18 @@ html, body {
 .adw-row:first-child { border-top-left-radius: var(--card-radius); border-top-right-radius: var(--card-radius); }
 .adw-row:last-child { border-bottom: none; border-bottom-left-radius: var(--card-radius); border-bottom-right-radius: var(--card-radius); }
 .adw-row.activatable:hover { background-color: var(--card-hover-bg); }
+
+.adw-row-prefix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--control-radius);
+  background-color: var(--button-bg);
+  color: var(--window-fg-color);
+  flex-shrink: 0;
+}
 
 .adw-row-text { flex: 1; min-width: 0; }
 .adw-row-title { font-size: 14px; font-weight: 500; color: var(--window-fg-color); }
@@ -386,6 +415,136 @@ html, body {
 .gtk-btn.flat:hover { background-color: var(--button-bg); }
 .gtk-btn.circular { border-radius: 999px; width: 34px; height: 34px; padding: 0; }
 .gtk-btn.pill { border-radius: 999px; height: 38px; padding: 0 22px; }
+
+/* Status Pills & Badges */
+.gtk-pill, .adw-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  background-color: var(--button-bg);
+  color: var(--window-fg-color);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.gtk-pill.accent, .adw-pill.accent {
+  background-color: var(--accent-subtle-bg, rgba(10, 132, 255, 0.18));
+  color: var(--accent-color, #0a84ff);
+}
+
+.gtk-pill.running, .gtk-pill.success, .adw-pill.running, .adw-pill.success {
+  background-color: var(--success-bg-color, rgba(48, 209, 88, 0.18));
+  color: var(--success-color, #30d158);
+}
+
+.gtk-pill.stopped, .adw-pill.stopped {
+  background-color: var(--button-bg);
+  color: var(--dim-label-color);
+}
+
+.gtk-pill.error, .gtk-pill.destructive, .adw-pill.error, .adw-pill.destructive {
+  background-color: var(--destructive-bg-color, rgba(255, 69, 58, 0.18));
+  color: var(--destructive-color, #ff453a);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: brisa-pulse 1.8s infinite;
+}
+
+@keyframes brisa-pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+/* Preset Selector Chips */
+.preset-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip-btn {
+  background: var(--button-bg);
+  border: 1px solid transparent;
+  color: var(--window-fg-color);
+  padding: 4px 10px;
+  border-radius: var(--control-radius);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.chip-btn:hover { background: var(--button-hover-bg); }
+.chip-btn.active { background: var(--accent-bg-color); color: var(--accent-fg-color); }
+
+/* Standalone Card */
+.adw-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--card-border-color, transparent);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  transition: background-color 140ms ease;
+}
+
+.adw-card:hover {
+  background-color: var(--card-hover-bg);
+}
+
+/* Empty State / Status Page */
+.adw-empty-row, .adw-status-page {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--dim-label-color);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Toast Notification Overlay */
+.adw-toast-overlay {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: var(--toast-bg, rgba(28, 28, 30, 0.95));
+  color: #ffffff;
+  height: 38px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 1000;
+}
+
+.adw-toast-overlay.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 .gtk-dropdown, select {
   appearance: none;
