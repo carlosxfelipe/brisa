@@ -438,6 +438,11 @@ html, body {
   color: var(--accent-color, #0a84ff);
 }
 
+.gtk-pill.info, .adw-pill.info {
+  background-color: var(--info-bg-color, rgba(53, 132, 228, 0.18));
+  color: var(--info-color, #3584e4);
+}
+
 .gtk-pill.running, .gtk-pill.success, .adw-pill.running, .adw-pill.success {
   background-color: var(--success-bg-color, rgba(48, 209, 88, 0.18));
   color: var(--success-color, #30d158);
