@@ -240,9 +240,8 @@ html, body {
   flex: 1;
   min-height: 0;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-gutter: stable;
+  overflow: hidden;
+  position: relative;
 }
 
 .adw-toolbar {
@@ -258,11 +257,20 @@ html, body {
 
 .adw-page {
   flex: 1;
+  width: 100%;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-gutter: stable;
   padding: 24px 20px 40px;
+  box-sizing: border-box;
+}
+
+.adw-page-clamped > *,
+.adw-page.clamped > * {
+  max-width: var(--clamp-max-width, 860px);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .adw-clamp {
