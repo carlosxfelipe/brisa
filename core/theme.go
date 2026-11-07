@@ -365,6 +365,8 @@ html, body {
 .adw-row-suffix { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .adw-entry-input, input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%;
+  box-sizing: border-box;
   background: transparent;
   border: none;
   outline: none;
