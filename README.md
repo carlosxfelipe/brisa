@@ -267,7 +267,7 @@ CGO_ENABLED=0 go test ./... -v
 ## 🏃 Running the Studio Showcase
 
 ```bash
-go run examples/main.go
+go run examples/studio/main.go
 ```
 
 ---

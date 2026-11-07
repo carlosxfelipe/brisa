@@ -986,10 +986,8 @@ func resolveAppIcon(icon string, rawAssets, subAssets fs.FS) ([]byte, string) {
 			}
 		}
 	}
-	for _, candidate := range []string{icon, path.Join("examples", clean)} {
-		if data, err := os.ReadFile(candidate); err == nil && len(data) > 0 {
-			return data, candidate
-		}
+	if data, err := os.ReadFile(icon); err == nil && len(data) > 0 {
+		return data, icon
 	}
 	return nil, ""
 }
