@@ -191,7 +191,7 @@ func (w *Window) minimizePlatform()                    {}
 func (w *Window) maximizePlatform()                    {}
 func (w *Window) restorePlatform()                     {}
 func (w *Window) setPlatformFullscreen(fs bool)        {}
-func (w *Window) evalPlatform(js string)               {}
+func (w *Window) evalPlatform(js string) bool          { return false }
 
 func preparePlatformDesktop(app *App) {}
 func notifyPlatform(app *App, opts NotificationOptions) bool {

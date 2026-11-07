@@ -23,6 +23,21 @@ func isEmptyType(t reflect.Type) bool {
 	return t == emptyType || t == emptyStructType
 }
 
+func logTagWarnings(reqType reflect.Type) {
+	if reqType == nil || validation.SilenceTagWarnings {
+		return
+	}
+	for _, w := range validation.CheckTagWarnings(reqType) {
+		if _, loaded := loggedTagWarnings.LoadOrStore(w, true); !loaded {
+			if validation.TagWarningLogger != nil {
+				validation.TagWarningLogger(w)
+			} else {
+				log.Printf("[BRISA WARNING] %s", w)
+			}
+		}
+	}
+}
+
 // CommandRegistrar is implemented by *App and *CommandGroup to allow registering typed REPR commands.
 type CommandRegistrar interface {
 	RegisterCommand(name string, handler HandlerFunc, doc CommandDoc) *Command
@@ -47,17 +62,7 @@ func Bind[TReq any, TRes any](r CommandRegistrar, name string, handler CommandHa
 	if err := validation.CheckTags(reqType); err != nil {
 		panic(fmt.Sprintf("brisa: invalid validate tag on command %q (%v): %v", name, reqType, err))
 	}
-	if !validation.SilenceTagWarnings {
-		for _, w := range validation.CheckTagWarnings(reqType) {
-			if _, loaded := loggedTagWarnings.LoadOrStore(w, true); !loaded {
-				if validation.TagWarningLogger != nil {
-					validation.TagWarningLogger(w)
-				} else {
-					log.Printf("[BRISA WARNING] %s", w)
-				}
-			}
-		}
-	}
+	logTagWarnings(reqType)
 
 	needBind := reqType != nil && !isEmptyType(reqType)
 
@@ -164,6 +169,7 @@ func bindReflectedMethod(r CommandRegistrar, namespace string, methodVal reflect
 		if err := validation.CheckTags(reqType); err != nil {
 			panic(fmt.Sprintf("brisa: invalid validate tag on service method %q (%v): %v", cmdName, reqType, err))
 		}
+		logTagWarnings(reqType)
 	}
 
 	needBind := reqType != nil && !isEmptyType(reqType)

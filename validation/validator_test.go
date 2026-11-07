@@ -9,13 +9,14 @@ import (
 )
 
 type SampleInput struct {
-	Name  string   `json:"name" validate:"required,min=3,max=20" msg:"required:Name is mandatory"`
-	Email string   `json:"email" validate:"required,email"`
-	URL   string   `json:"url" validate:"url"`
-	UUID  string   `json:"uuid" validate:"uuid"`
-	Code  string   `json:"code" validate:"len=4"`
-	Role  string   `json:"role" validate:"oneof=admin,editor,viewer"`
-	Tags  []string `json:"tags" validate:"min=1,max=3"`
+	Name  string            `json:"name" validate:"required,min=3,max=20" msg:"required:Name is mandatory"`
+	Email string            `json:"email" validate:"required,email"`
+	URL   string            `json:"url" validate:"url"`
+	UUID  string            `json:"uuid" validate:"uuid"`
+	Code  string            `json:"code" validate:"len=4"`
+	Role  string            `json:"role" validate:"oneof=admin,editor,viewer"`
+	Tags  []string          `json:"tags" validate:"min=1,max=3"`
+	Meta  map[string]string `json:"meta" validate:"min=1,max=2"`
 }
 
 func (s *SampleInput) Validate() error {
@@ -38,6 +39,7 @@ func TestValidateStructRules(t *testing.T) {
 		Code:  "ABCD",
 		Role:  "admin",
 		Tags:  []string{"go", "desktop"},
+		Meta:  map[string]string{"env": "prod"},
 	}
 	if valErr := validation.ValidateStruct(nil, &valid); valErr != nil {
 		t.Fatalf("expected valid struct, got: %v", valErr)
@@ -59,7 +61,7 @@ func TestValidateStructRules(t *testing.T) {
 	if valErr.Errors["name"][0] != "Name is mandatory" {
 		t.Fatalf("expected custom required message, got %v", valErr.Errors["name"])
 	}
-	for _, field := range []string{"email", "url", "uuid", "code", "role", "tags"} {
+	for _, field := range []string{"email", "url", "uuid", "code", "role", "tags", "meta"} {
 		if len(valErr.Errors[field]) == 0 {
 			t.Fatalf("expected validation error on field %q", field)
 		}

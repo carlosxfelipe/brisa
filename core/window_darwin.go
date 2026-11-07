@@ -168,10 +168,14 @@ func (w *Window) setPlatformFullscreen(fs bool) {
 	}
 }
 
-func (w *Window) evalPlatform(js string) {
+func (w *Window) evalPlatform(js string) bool {
+	if activeDarwinWindow != w || w.cfg.Headless {
+		return false
+	}
 	cStr := C.CString(js)
 	defer C.free(unsafe.Pointer(cStr))
 	C.brisaEval(cStr)
+	return true
 }
 
 func preparePlatformDesktop(app *App) {

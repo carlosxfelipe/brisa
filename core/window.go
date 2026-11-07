@@ -299,7 +299,9 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 
 // Eval evaluates a JavaScript expression in the desktop window context and returns the result.
 func (w *Window) Eval(expression string) (any, error) {
-	w.evalPlatform(expression)
+	if w.evalPlatform(expression) {
+		return nil, nil
+	}
 	w.mu.RLock()
 	cdp := w.cdp
 	sessionID := w.sessionID

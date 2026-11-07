@@ -764,7 +764,7 @@ func toComparableValue(val reflect.Value) (float64, string, bool) {
 		return float64(val.Int()), "", true
 	case reflect.Float32, reflect.Float64:
 		return val.Float(), "", true
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array, reflect.Map:
 		return float64(val.Len()), " items", true
 	default:
 		return 0, "", false
