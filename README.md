@@ -264,10 +264,18 @@ Or for pure Go testing (`CGO_ENABLED=0`):
 CGO_ENABLED=0 go test ./... -v
 ```
 
-## 🏃 Running the Studio Showcase
+## 🏃 Running the Examples
+
+**1. Studio Showcase (Built-in Theme):**
 
 ```bash
 go run examples/studio/main.go
+```
+
+**2. Custom CSS Showcase (Custom Stylesheet):**
+
+```bash
+go run examples/custom-css/main.go
 ```
 
 ---
