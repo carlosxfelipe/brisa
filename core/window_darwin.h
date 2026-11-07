@@ -18,6 +18,8 @@ void brisaMaximize(void);
 void brisaRestore(void);
 void brisaSetFullscreen(int fullscreen);
 void brisaEval(const char* js);
+int brisaDeliverNotificationInProcess(const char* title, const char* subtitle, const char* body);
+int brisaRunNotificationHelper(const char* title, const char* subtitle, const char* body);
 
 #endif // BRISA_WINDOW_DARWIN_H
 

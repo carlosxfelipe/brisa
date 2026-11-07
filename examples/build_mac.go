@@ -79,6 +79,8 @@ func main() {
     <string>10.13</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSUserNotificationAlertStyle</key>
+    <string>banner</string>
 </dict>
 </plist>
 `, appName, appName, bundleID, version, version, appName)
@@ -90,6 +92,11 @@ func main() {
 	// 5. Generate PkgInfo
 	pkgInfoPath := filepath.Join(contentsDir, "PkgInfo")
 	_ = os.WriteFile(pkgInfoPath, []byte("APPL????"), 0644)
+
+	// 6. Ad-hoc sign the bundle so macOS Notification Center binds Info.plist and app.icns
+	if cs, err := exec.LookPath("codesign"); err == nil {
+		_ = exec.Command(cs, "--force", "--deep", "--sign", "-", appBundle).Run()
+	}
 
 	fmt.Printf("\n✨ Successfully generated: %s\n", appBundle)
 	fmt.Printf("👉 To run: open %q\n", appBundle)

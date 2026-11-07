@@ -413,6 +413,12 @@ func Notify(app *App, opts NotificationOptions) error {
 	if app != nil {
 		app.Emit("brisa:notification", opts)
 	}
+	if app != nil && app.window != nil && app.window.cfg.Headless {
+		return nil
+	}
+	if notifyPlatform(app, opts) {
+		return nil
+	}
 
 	switch runtime.GOOS {
 	case "linux":
@@ -430,7 +436,12 @@ func Notify(app *App, opts NotificationOptions) error {
 		}
 	case "darwin":
 		if path, err := exec.LookPath("osascript"); err == nil {
-			script := fmt.Sprintf(`display notification %q with title %q`, opts.Body, opts.Title)
+			var script string
+			if opts.Subtitle != "" {
+				script = fmt.Sprintf(`display notification %q with title %q subtitle %q`, opts.Body, opts.Title, opts.Subtitle)
+			} else {
+				script = fmt.Sprintf(`display notification %q with title %q`, opts.Body, opts.Title)
+			}
 			_ = exec.Command(path, "-e", script).Start()
 			return nil
 		}

@@ -1030,6 +1030,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	ensureLinuxDesktopEntry(a.config, a.iconBytes, a.iconPath)
 	setX11WindowIcon(a.config.AppID, a.iconBytes)
+	preparePlatformDesktop(a)
 
 	a.startSystemThemeWatcher(ctx)
 

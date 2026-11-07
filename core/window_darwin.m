@@ -2,14 +2,21 @@
 
 #import "window_darwin.h"
 
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 extern void brisaOnNativeWindowClosed(void);
 
-@interface BrisaNativeWindowDelegate : NSObject <NSWindowDelegate, WKUIDelegate, WKNavigationDelegate>
+@interface BrisaNativeWindowDelegate : NSObject <NSWindowDelegate, WKUIDelegate, WKNavigationDelegate, NSUserNotificationCenterDelegate>
 @end
 
 @implementation BrisaNativeWindowDelegate
 - (void)windowWillClose:(NSNotification *)notification {
     brisaOnNativeWindowClosed();
+}
+
+- (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center
+     shouldPresentNotification:(NSUserNotification *)notification {
+    return YES;
 }
 
 - (WKWebView *)webView:(WKWebView *)webView
@@ -81,6 +88,11 @@ void brisaCreateWindow(const char* title, int width, int height, int x, int y, i
 
         gBrisaDelegate = [[BrisaNativeWindowDelegate alloc] init];
         [gBrisaWindow setDelegate:gBrisaDelegate];
+
+        NSUserNotificationCenter *notifCenter = [NSUserNotificationCenter defaultUserNotificationCenter];
+        if (notifCenter) {
+            [notifCenter setDelegate:gBrisaDelegate];
+        }
 
         WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
         [config.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
@@ -223,5 +235,95 @@ void brisaEval(const char* js) {
             [gBrisaWebView evaluateJavaScript:nsJS completionHandler:nil];
         }
     });
+}
+
+@interface BrisaNotificationHelperDelegate : NSObject <NSUserNotificationCenterDelegate>
+@property (nonatomic, assign) BOOL delivered;
+@end
+
+@implementation BrisaNotificationHelperDelegate
+- (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center
+     shouldPresentNotification:(NSUserNotification *)notification {
+    return YES;
+}
+
+- (void)userNotificationCenter:(NSUserNotificationCenter *)center
+        didDeliverNotification:(NSUserNotification *)notification {
+    self.delivered = YES;
+}
+@end
+
+int brisaDeliverNotificationInProcess(const char* title, const char* subtitle, const char* body) {
+    @autoreleasepool {
+        NSBundle *bundle = [NSBundle mainBundle];
+        NSString *bundleID = [bundle bundleIdentifier];
+        if (!bundleID || [bundleID length] == 0) {
+            return 0;
+        }
+        NSString *bundlePath = [bundle bundlePath];
+        if (!bundlePath || ![bundlePath hasSuffix:@".app"]) {
+            return 0;
+        }
+        NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
+        if (!center) {
+            return 0;
+        }
+        NSString *nsTitle = title ? [NSString stringWithUTF8String:title] : @"";
+        NSString *nsSubtitle = subtitle ? [NSString stringWithUTF8String:subtitle] : @"";
+        NSString *nsBody = body ? [NSString stringWithUTF8String:body] : @"";
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (gBrisaDelegate) {
+                [center setDelegate:gBrisaDelegate];
+            }
+            NSUserNotification *notif = [[NSUserNotification alloc] init];
+            notif.identifier = [[NSUUID UUID] UUIDString];
+            if ([nsTitle length] > 0) {
+                notif.title = nsTitle;
+            }
+            if ([nsSubtitle length] > 0) {
+                notif.subtitle = nsSubtitle;
+            }
+            if ([nsBody length] > 0) {
+                notif.informativeText = nsBody;
+            }
+            [center deliverNotification:notif];
+        });
+        return 1;
+    }
+}
+
+int brisaRunNotificationHelper(const char* title, const char* subtitle, const char* body) {
+    @autoreleasepool {
+        [NSApplication sharedApplication];
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+
+        NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
+        if (!center) {
+            return 0;
+        }
+
+        BrisaNotificationHelperDelegate *del = [[BrisaNotificationHelperDelegate alloc] init];
+        [center setDelegate:del];
+
+        NSUserNotification *notif = [[NSUserNotification alloc] init];
+        notif.identifier = [[NSUUID UUID] UUIDString];
+        if (title && title[0] != '\0') {
+            notif.title = [NSString stringWithUTF8String:title];
+        }
+        if (subtitle && subtitle[0] != '\0') {
+            notif.subtitle = [NSString stringWithUTF8String:subtitle];
+        }
+        if (body && body[0] != '\0') {
+            notif.informativeText = [NSString stringWithUTF8String:body];
+        }
+
+        [center deliverNotification:notif];
+
+        NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:1.5];
+        while (!del.delivered && [deadline timeIntervalSinceNow] > 0) {
+            [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.04]];
+        }
+        return del.delivered ? 1 : 0;
+    }
 }
 
