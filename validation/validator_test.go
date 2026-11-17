@@ -27,7 +27,7 @@ func (s *SampleInput) Validate() error {
 }
 
 func TestValidateStructRules(t *testing.T) {
-	if err := validation.CheckTags(reflect.TypeOf(SampleInput{})); err != nil {
+	if err := validation.CheckTags(reflect.TypeFor[SampleInput]()); err != nil {
 		t.Fatalf("unexpected tag check error: %v", err)
 	}
 

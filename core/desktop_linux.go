@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"image"
 	_ "image/jpeg"
@@ -62,14 +63,8 @@ func ensureLinuxDesktopEntry(cfg Config, iconBytes []byte, iconPath string) {
 		execPath = "/usr/bin/env true"
 	}
 
-	title := cfg.Title
-	if title == "" {
-		title = appID
-	}
-	desc := cfg.Description
-	if desc == "" {
-		desc = title
-	}
+	title := cmp.Or(cfg.Title, appID)
+	desc := cmp.Or(cfg.Description, title)
 
 	desktopFile := filepath.Join(appsDir, appID+".desktop")
 
@@ -145,7 +140,7 @@ func setX11WindowIcon(appID string, iconBytes []byte) {
 
 	go func() {
 		// Poll briefly to find the created window matching appID
-		for i := 0; i < 20; i++ {
+		for range 20 {
 			time.Sleep(100 * time.Millisecond)
 			wid := findX11WindowID(appID)
 			if wid != 0 {
@@ -161,8 +156,8 @@ func downscaleImage(src image.Image, targetW, targetH int) image.Image {
 	bounds := src.Bounds()
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
-	for y := 0; y < targetH; y++ {
-		for x := 0; x < targetW; x++ {
+	for y := range targetH {
+		for x := range targetW {
 			srcX := bounds.Min.X + (x*srcW)/targetW
 			srcY := bounds.Min.Y + (y*srcH)/targetH
 			dst.Set(x, y, src.At(srcX, srcY))
@@ -184,8 +179,7 @@ func findX11WindowID(appID string) uint32 {
 	if len(parts) < 2 {
 		return 0
 	}
-	wids := strings.Split(parts[1], ",")
-	for _, raw := range wids {
+	for raw := range strings.SplitSeq(parts[1], ",") {
 		wStr := strings.TrimSpace(raw)
 		if wStr == "" {
 			continue
@@ -205,8 +199,8 @@ func findX11WindowID(appID string) uint32 {
 
 func applyX11IconProperty(display string, wid uint32, pixels []uint32) error {
 	dispNum := "0"
-	if idx := strings.Index(display, ":"); idx != -1 {
-		dispNum = strings.Split(display[idx+1:], ".")[0]
+	if _, after, ok := strings.Cut(display, ":"); ok {
+		dispNum, _, _ = strings.Cut(after, ".")
 	}
 
 	socketPath := "/tmp/.X11-unix/X" + dispNum

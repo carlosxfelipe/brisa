@@ -1,9 +1,10 @@
 package core
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -365,9 +366,8 @@ func (a *App) GenerateTypeScriptSDK() string {
 	sb.WriteString("// Application: " + spec.Title + " (" + spec.Version + ")\n\n")
 	sb.WriteString("export interface BrisaCommandMap {\n")
 
-	cmds := make([]CommandSchema, len(spec.Commands))
-	copy(cmds, spec.Commands)
-	sort.Slice(cmds, func(i, j int) bool { return cmds[i].Name < cmds[j].Name })
+	cmds := slices.Clone(spec.Commands)
+	slices.SortFunc(cmds, func(a, b CommandSchema) int { return cmp.Compare(a.Name, b.Name) })
 
 	for _, c := range cmds {
 		inType := "void | Record<string, never>"

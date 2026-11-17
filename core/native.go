@@ -301,7 +301,7 @@ func (d *Dialog) openFileInternal(opts FileDialogOptions, multiple, directory bo
 
 func splitNonEmptyLines(s string) []string {
 	var res []string
-	for _, line := range strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
 		line = strings.TrimSpace(line)
 		if line != "" {
 			res = append(res, line)

@@ -81,11 +81,11 @@ func newWindow(app *App, cfg WindowConfig) *Window {
 	} else if cfg.MinHeight < 0 {
 		cfg.MinHeight = 0
 	}
-	if cfg.MinWidth > 0 && cfg.Width < cfg.MinWidth {
-		cfg.Width = cfg.MinWidth
+	if cfg.MinWidth > 0 {
+		cfg.Width = max(cfg.Width, cfg.MinWidth)
 	}
-	if cfg.MinHeight > 0 && cfg.Height < cfg.MinHeight {
-		cfg.Height = cfg.MinHeight
+	if cfg.MinHeight > 0 {
+		cfg.Height = max(cfg.Height, cfg.MinHeight)
 	}
 	if cfg.Title == "" && app != nil {
 		cfg.Title = app.config.Title
@@ -162,11 +162,11 @@ func (w *Window) SetSize(width, height int) error {
 		return errors.New("brisa window: width and height must be positive")
 	}
 	w.mu.Lock()
-	if w.cfg.MinWidth > 0 && width < w.cfg.MinWidth {
-		width = w.cfg.MinWidth
+	if w.cfg.MinWidth > 0 {
+		width = max(width, w.cfg.MinWidth)
 	}
-	if w.cfg.MinHeight > 0 && height < w.cfg.MinHeight {
-		height = w.cfg.MinHeight
+	if w.cfg.MinHeight > 0 {
+		height = max(height, w.cfg.MinHeight)
 	}
 	w.cfg.Width = width
 	w.cfg.Height = height

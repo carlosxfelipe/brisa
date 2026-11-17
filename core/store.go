@@ -10,9 +10,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
+	"strings"
 	"sync"
 )
 
@@ -204,12 +206,10 @@ func (s *Store) Keys() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	keys := make([]string, 0, len(s.data))
-	for k := range s.data {
-		keys = append(keys, k)
+	if len(s.data) == 0 {
+		return []string{}
 	}
-	sort.Strings(keys)
-	return keys
+	return slices.Sorted(maps.Keys(s.data))
 }
 
 // All returns a map of all stored key-value pairs decoded as generic JSON values.
@@ -241,11 +241,11 @@ func (s *Store) load() error {
 
 	payload := content
 	if s.aead != nil {
-		str := string(content)
-		if !hasPrefix(str, encryptedFilePrefix) {
+		encoded, ok := strings.CutPrefix(string(content), encryptedFilePrefix)
+		if !ok {
 			return errors.New("brisa store: file is not encrypted or has invalid header")
 		}
-		rawCipher, err := base64.StdEncoding.DecodeString(str[len(encryptedFilePrefix):])
+		rawCipher, err := base64.StdEncoding.DecodeString(encoded)
 		if err != nil {
 			return fmt.Errorf("brisa store decode cipher: %w", err)
 		}
@@ -304,8 +304,4 @@ func (s *Store) saveLocked() error {
 		return fmt.Errorf("brisa store atomic rename: %w", err)
 	}
 	return nil
-}
-
-func hasPrefix(s, prefix string) bool {
-	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
 }

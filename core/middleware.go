@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -49,8 +50,7 @@ func Logger() MiddlewareFunc {
 		dur := time.Since(start)
 		status := ctx.status
 		if err != nil {
-			var rpcErr *RPCError
-			if ok := asRPCError(err, &rpcErr); ok && rpcErr.Status != 0 {
+			if rpcErr, ok := errors.AsType[*RPCError](err); ok && rpcErr.Status != 0 {
 				status = rpcErr.Status
 			} else {
 				status = 500
@@ -76,8 +76,7 @@ func SlogLogger(opts ...SlogLoggerOptions) MiddlewareFunc {
 		dur := time.Since(start)
 		status := ctx.status
 		if err != nil {
-			var rpcErr *RPCError
-			if ok := asRPCError(err, &rpcErr); ok && rpcErr.Status != 0 {
+			if rpcErr, ok := errors.AsType[*RPCError](err); ok && rpcErr.Status != 0 {
 				status = rpcErr.Status
 			} else {
 				status = 500
@@ -124,7 +123,7 @@ func Timeout(d time.Duration) MiddlewareFunc {
 		ctx.WithContext(c)
 
 		err := ctx.Next()
-		if c.Err() == context.DeadlineExceeded {
+		if errors.Is(c.Err(), context.DeadlineExceeded) {
 			return NewError(408, "COMMAND_TIMEOUT", fmt.Sprintf("command %q timed out after %s", ctx.Command(), d))
 		}
 		return err
@@ -176,15 +175,4 @@ func defaultRequestID() string {
 	var b [12]byte
 	_, _ = rand.Read(b[:])
 	return "req_" + hex.EncodeToString(b[:])
-}
-
-func asRPCError(err error, target **RPCError) bool {
-	if err == nil {
-		return false
-	}
-	if r, ok := err.(*RPCError); ok {
-		*target = r
-		return true
-	}
-	return false
 }

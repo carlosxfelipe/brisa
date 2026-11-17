@@ -13,10 +13,10 @@ import (
 
 var (
 	loggedTagWarnings sync.Map
-	emptyType         = reflect.TypeOf(Empty{})
-	emptyStructType   = reflect.TypeOf(struct{}{})
-	contextPtrType    = reflect.TypeOf((*core.Context)(nil))
-	errorInterface    = reflect.TypeOf((*error)(nil)).Elem()
+	emptyType         = reflect.TypeFor[Empty]()
+	emptyStructType   = reflect.TypeFor[struct{}]()
+	contextPtrType    = reflect.TypeFor[*core.Context]()
+	errorInterface    = reflect.TypeFor[error]()
 )
 
 func isEmptyType(t reflect.Type) bool {
@@ -115,7 +115,7 @@ func BindService(r CommandRegistrar, namespace string, service any) []*Command {
 	typ := val.Type()
 
 	var registered []*Command
-	for i := 0; i < typ.NumMethod(); i++ {
+	for i := range typ.NumMethod() {
 		m := typ.Method(i)
 		if !m.IsExported() {
 			continue

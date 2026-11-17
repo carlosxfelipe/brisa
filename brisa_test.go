@@ -2,7 +2,6 @@ package brisa_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -72,7 +71,7 @@ func TestREPRBindAndDispatch(t *testing.T) {
 	brisa.BindEndpoint(app, "notes.archive", &ArchiveNoteEndpoint{})
 
 	// 1. Valid dispatch
-	res, err := app.Dispatch(context.Background(), "notes.create", CreateNoteReq{
+	res, err := app.Dispatch(t.Context(), "notes.create", CreateNoteReq{
 		Title: "Finish Brisa",
 		Tag:   "work",
 	})
@@ -88,7 +87,7 @@ func TestREPRBindAndDispatch(t *testing.T) {
 	}
 
 	// 2. Validation error (title too short + invalid oneof tag)
-	badRes, err := app.Dispatch(context.Background(), "notes.create", CreateNoteReq{
+	badRes, err := app.Dispatch(t.Context(), "notes.create", CreateNoteReq{
 		Title: "Hi",
 		Tag:   "invalid",
 	})
@@ -103,7 +102,7 @@ func TestREPRBindAndDispatch(t *testing.T) {
 	}
 
 	// 3. Struct Endpoint dispatch
-	archRes, err := app.Dispatch(context.Background(), "notes.archive", map[string]any{"id": "note_1"})
+	archRes, err := app.Dispatch(t.Context(), "notes.archive", map[string]any{"id": "note_1"})
 	if err != nil || archRes.Status != 200 {
 		t.Fatalf("expected archive endpoint 200, got %+v (%v)", archRes, err)
 	}
@@ -116,7 +115,7 @@ func TestBindServiceAndGroups(t *testing.T) {
 
 	brisa.BindService(app, "math", &MathService{})
 
-	res, err := app.Dispatch(context.Background(), "math.add", AddReq{A: 15, B: 27})
+	res, err := app.Dispatch(t.Context(), "math.add", AddReq{A: 15, B: 27})
 	if err != nil || res.Status != 200 {
 		t.Fatalf("expected math.add 200, got %+v (%v)", res, err)
 	}
@@ -125,7 +124,7 @@ func TestBindServiceAndGroups(t *testing.T) {
 		t.Fatalf("expected sum=42, got %d", addOut.Sum)
 	}
 
-	pingRes, err := app.Dispatch(context.Background(), "math.ping", nil)
+	pingRes, err := app.Dispatch(t.Context(), "math.ping", nil)
 	if err != nil || pingRes.Status != 200 || pingRes.Data != "pong" {
 		t.Fatalf("expected pong, got %+v", pingRes)
 	}
@@ -283,19 +282,19 @@ func TestMiddlewaresAndEvents(t *testing.T) {
 	})
 
 	// 1. Panic recovery
-	panicRes, _ := app.Dispatch(context.Background(), "panic.cmd", nil)
+	panicRes, _ := app.Dispatch(t.Context(), "panic.cmd", nil)
 	if panicRes.Status != 500 || panicRes.Error == nil || panicRes.Error.Code != "INTERNAL_PANIC" {
 		t.Fatalf("expected 500 INTERNAL_PANIC, got %+v", panicRes)
 	}
 
 	// 2. Timeout middleware
-	slowRes, _ := app.Dispatch(context.Background(), "slow.cmd", nil)
+	slowRes, _ := app.Dispatch(t.Context(), "slow.cmd", nil)
 	if slowRes.Status != 408 || slowRes.Error == nil || slowRes.Error.Code != "COMMAND_TIMEOUT" {
 		t.Fatalf("expected 408 COMMAND_TIMEOUT, got %+v", slowRes)
 	}
 
 	// 3. Structured RPCError
-	errRes, _ := app.Dispatch(context.Background(), "custom.err", nil)
+	errRes, _ := app.Dispatch(t.Context(), "custom.err", nil)
 	if errRes.Status != 409 || errRes.Error == nil || errRes.Error.Code != "CONFLICT_STATE" {
 		t.Fatalf("expected 409 CONFLICT_STATE, got %+v", errRes)
 	}
@@ -325,8 +324,8 @@ func TestBuiltinSystemCommands(t *testing.T) {
 	})
 
 	// Store commands
-	_, _ = app.Dispatch(context.Background(), "$brisa.store.set", map[string]any{"key": "lang", "value": "pt-BR"})
-	getRes, _ := app.Dispatch(context.Background(), "$brisa.store.get", map[string]any{"key": "lang"})
+	_, _ = app.Dispatch(t.Context(), "$brisa.store.set", map[string]any{"key": "lang", "value": "pt-BR"})
+	getRes, _ := app.Dispatch(t.Context(), "$brisa.store.get", map[string]any{"key": "lang"})
 	if getRes.Status != 200 {
 		t.Fatalf("expected 200 from $brisa.store.get, got %d", getRes.Status)
 	}
@@ -336,14 +335,14 @@ func TestBuiltinSystemCommands(t *testing.T) {
 	}
 
 	// Window commands
-	_, _ = app.Dispatch(context.Background(), "$brisa.window.setTitle", map[string]any{"title": "Updated Title"})
+	_, _ = app.Dispatch(t.Context(), "$brisa.window.setTitle", map[string]any{"title": "Updated Title"})
 	if app.Window().Title() != "Updated Title" {
 		t.Fatalf("expected window title 'Updated Title', got %q", app.Window().Title())
 	}
 
 	// Clipboard fallback
-	_, _ = app.Dispatch(context.Background(), "$brisa.clipboard.writeText", map[string]any{"text": "brisa-clip"})
-	clipRes, _ := app.Dispatch(context.Background(), "$brisa.clipboard.readText", nil)
+	_, _ = app.Dispatch(t.Context(), "$brisa.clipboard.writeText", map[string]any{"text": "brisa-clip"})
+	clipRes, _ := app.Dispatch(t.Context(), "$brisa.clipboard.readText", nil)
 	if clipRes.Status != 200 {
 		t.Fatalf("expected 200 from clipboard read, got %d", clipRes.Status)
 	}

@@ -1,9 +1,11 @@
 package core
 
 import (
+	"cmp"
 	"fmt"
+	"maps"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 )
@@ -29,16 +31,10 @@ func (e *RPCError) Error() string {
 
 // NewError creates a new structured RPCError with a status code and message.
 func NewError(status int, code, message string) *RPCError {
-	if status == 0 {
-		status = 400
-	}
-	if code == "" {
-		code = "BRISA_ERROR"
-	}
 	return &RPCError{
-		Code:    code,
+		Code:    cmp.Or(code, "BRISA_ERROR"),
 		Message: message,
-		Status:  status,
+		Status:  cmp.Or(status, 400),
 	}
 }
 
@@ -85,7 +81,7 @@ type CommandSchema struct {
 	Summary     string       `json:"summary,omitempty"`
 	Description string       `json:"description,omitempty"`
 	Tags        []string     `json:"tags,omitempty"`
-	Deprecated  bool         `json:"deprecated,omitempty"`
+	Deprecated  bool         `json:"deprecated,omitzero"`
 	Input       *FieldSchema `json:"input,omitempty"`
 	Output      *FieldSchema `json:"output,omitempty"`
 }
@@ -115,7 +111,7 @@ func EmbeddedStructType(field reflect.StructField) (reflect.Type, bool) {
 	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
-	if t.Kind() != reflect.Struct || t == reflect.TypeOf(time.Time{}) {
+	if t.Kind() != reflect.Struct || t == reflect.TypeFor[time.Time]() {
 		return nil, false
 	}
 	return t, true
@@ -129,7 +125,7 @@ func BuildTypeSchema(t reflect.Type) *FieldSchema {
 	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
-	if t == reflect.TypeOf(Empty{}) || t == reflect.TypeOf(struct{}{}) {
+	if t == reflect.TypeFor[Empty]() || t == reflect.TypeFor[struct{}]() {
 		return nil
 	}
 	schema := buildFieldSchemaRecursive(t, make(map[reflect.Type]bool))
@@ -140,7 +136,7 @@ func buildFieldSchemaRecursive(t reflect.Type, seen map[reflect.Type]bool) Field
 	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
-	if t == reflect.TypeOf(time.Time{}) {
+	if t == reflect.TypeFor[time.Time]() {
 		return FieldSchema{Type: "string (date-time)", TSType: "string"}
 	}
 
@@ -180,12 +176,7 @@ func buildFieldSchemaRecursive(t reflect.Type, seen map[reflect.Type]bool) Field
 		collectStructFields(t, props, seen)
 
 		var tsFields []string
-		keys := make([]string, 0, len(props))
-		for k := range props {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
+		for _, k := range slices.Sorted(maps.Keys(props)) {
 			prop := props[k]
 			opt := "?"
 			if prop.Required {
@@ -209,7 +200,7 @@ func buildFieldSchemaRecursive(t reflect.Type, seen map[reflect.Type]bool) Field
 }
 
 func collectStructFields(t reflect.Type, props map[string]FieldSchema, seen map[reflect.Type]bool) {
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		f := t.Field(i)
 		if embType, ok := EmbeddedStructType(f); ok {
 			collectStructFields(embType, props, seen)
@@ -224,9 +215,8 @@ func collectStructFields(t reflect.Type, props map[string]FieldSchema, seen map[
 		}
 		fieldName := f.Name
 		if jsonTag != "" {
-			parts := strings.Split(jsonTag, ",")
-			if parts[0] != "" {
-				fieldName = parts[0]
+			if name, _, _ := strings.Cut(jsonTag, ","); name != "" {
+				fieldName = name
 			}
 		}
 
@@ -237,7 +227,7 @@ func collectStructFields(t reflect.Type, props map[string]FieldSchema, seen map[
 			fs.Example = ex
 		}
 		if vTag := f.Tag.Get("validate"); vTag != "" {
-			for _, r := range strings.Split(vTag, ",") {
+			for r := range strings.SplitSeq(vTag, ",") {
 				r = strings.TrimSpace(r)
 				if r == "" || r == "nowarn" {
 					continue

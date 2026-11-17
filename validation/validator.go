@@ -1,11 +1,14 @@
 package validation
 
 import (
+	"cmp"
 	"fmt"
+	"maps"
 	"net/mail"
 	"net/url"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,7 +46,7 @@ func getCompiledStructMeta(t reflect.Type) *compiledStructMeta {
 		return cached.(*compiledStructMeta)
 	}
 	meta := &compiledStructMeta{}
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		if ft, ok := core.EmbeddedStructType(field); ok {
 			meta.embedded = append(meta.embedded, compiledEmbeddedMeta{
@@ -56,10 +59,7 @@ func getCompiledStructMeta(t reflect.Type) *compiledStructMeta {
 			continue
 		}
 		validateTag := field.Tag.Get("validate")
-		msgTag := field.Tag.Get("msg")
-		if msgTag == "" {
-			msgTag = field.Tag.Get("message")
-		}
+		msgTag := cmp.Or(field.Tag.Get("msg"), field.Tag.Get("message"))
 		var rules []string
 		if validateTag != "" {
 			for _, r := range splitRules(validateTag) {
@@ -119,7 +119,7 @@ func (v *ValidationError) FieldErrors() map[string][]string {
 }
 
 func isStdLibStruct(t reflect.Type) bool {
-	if t == reflect.TypeOf(time.Time{}) {
+	if t == reflect.TypeFor[time.Time]() {
 		return true
 	}
 	pkg := t.PkgPath()
@@ -130,8 +130,8 @@ func isKnownRule(s string) bool {
 	if s == "required" || s == "email" || s == "url" || s == "uuid" || s == "nowarn" {
 		return true
 	}
-	parts := strings.SplitN(s, "=", 2)
-	switch parts[0] {
+	ruleName, _, _ := strings.Cut(s, "=")
+	switch ruleName {
 	case "min", "max", "len", "oneof":
 		return true
 	default:
@@ -141,7 +141,7 @@ func isKnownRule(s string) bool {
 
 func splitRules(tag string) []string {
 	var rules []string
-	for _, part := range strings.Split(tag, ",") {
+	for part := range strings.SplitSeq(tag, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
@@ -161,14 +161,14 @@ func parseMessageTag(tag string) map[string]string {
 		return nil
 	}
 	msgs := make(map[string]string)
-	for _, part := range strings.Split(tag, "|") {
+	for part := range strings.SplitSeq(tag, "|") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
-		if idx := strings.Index(part, ":"); idx != -1 {
-			rule := strings.TrimSpace(part[:idx])
-			msg := strings.TrimSpace(part[idx+1:])
+		if rawRule, rawMsg, ok := strings.Cut(part, ":"); ok {
+			rule := strings.TrimSpace(rawRule)
+			msg := strings.TrimSpace(rawMsg)
 			if rule != "" && msg != "" {
 				msgs[rule] = msg
 			}
@@ -221,23 +221,20 @@ func checkTagsInternal(t reflect.Type, seen map[reflect.Type]bool) error {
 	seen[t] = true
 	defer delete(seen, t)
 
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		tag := field.Tag.Get("validate")
 		name := fieldIdentifier(field)
 
-		msgTag := field.Tag.Get("msg")
-		if msgTag == "" {
-			msgTag = field.Tag.Get("message")
-		}
+		msgTag := cmp.Or(field.Tag.Get("msg"), field.Tag.Get("message"))
 		if msgTag != "" {
 			if tag == "" {
 				return fmt.Errorf("field %q: tag `msg` defined without a `validate` tag", name)
 			}
 			declaredRules := make(map[string]bool)
 			for _, r := range splitRules(tag) {
-				parts := strings.SplitN(strings.TrimSpace(r), "=", 2)
-				declaredRules[parts[0]] = true
+				ruleName, _, _ := strings.Cut(strings.TrimSpace(r), "=")
+				declaredRules[ruleName] = true
 			}
 			customMsgs := parseMessageTag(msgTag)
 			for ruleKey := range customMsgs {
@@ -259,29 +256,29 @@ func checkTagsInternal(t reflect.Type, seen map[reflect.Type]bool) error {
 				if rule == "" {
 					continue
 				}
-				parts := strings.SplitN(rule, "=", 2)
-				switch parts[0] {
+				ruleName, param, hasParam := strings.Cut(rule, "=")
+				switch ruleName {
 				case "required", "email", "url", "uuid", "nowarn", "omitempty":
 				case "min", "max":
-					if len(parts) < 2 || parts[1] == "" {
-						return fmt.Errorf("field %q: rule %q requires a numeric parameter (e.g. %s=3)", name, parts[0], parts[0])
+					if !hasParam || param == "" {
+						return fmt.Errorf("field %q: rule %q requires a numeric parameter (e.g. %s=3)", name, ruleName, ruleName)
 					}
-					if _, err := strconv.ParseFloat(parts[1], 64); err != nil {
-						return fmt.Errorf("field %q: rule %q has an invalid numeric parameter %q", name, parts[0], parts[1])
+					if _, err := strconv.ParseFloat(param, 64); err != nil {
+						return fmt.Errorf("field %q: rule %q has an invalid numeric parameter %q", name, ruleName, param)
 					}
 				case "len":
-					if len(parts) < 2 || parts[1] == "" {
-						return fmt.Errorf("field %q: rule %q requires an integer parameter (e.g. len=5)", name, parts[0])
+					if !hasParam || param == "" {
+						return fmt.Errorf("field %q: rule %q requires an integer parameter (e.g. len=5)", name, ruleName)
 					}
-					if _, err := strconv.Atoi(parts[1]); err != nil {
-						return fmt.Errorf("field %q: rule %q has an invalid integer parameter %q", name, parts[0], parts[1])
+					if _, err := strconv.Atoi(param); err != nil {
+						return fmt.Errorf("field %q: rule %q has an invalid integer parameter %q", name, ruleName, param)
 					}
 				case "oneof":
-					if len(parts) < 2 || strings.TrimSpace(parts[1]) == "" {
-						return fmt.Errorf("field %q: rule %q requires at least one choice (e.g. oneof=a,b,c)", name, parts[0])
+					if !hasParam || strings.TrimSpace(param) == "" {
+						return fmt.Errorf("field %q: rule %q requires at least one choice (e.g. oneof=a,b,c)", name, ruleName)
 					}
 				default:
-					return fmt.Errorf("field %q: unknown validation rule %q", name, parts[0])
+					return fmt.Errorf("field %q: unknown validation rule %q", name, ruleName)
 				}
 			}
 		}
@@ -319,7 +316,7 @@ func checkTagWarningsInternal(t reflect.Type, seen map[reflect.Type]bool, shadow
 
 	mergedShadowed := collectShadowedFields(t, shadowed)
 
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		if _, ok := core.EmbeddedStructType(field); ok {
 			continue
@@ -347,10 +344,7 @@ func checkTagWarningsInternal(t reflect.Type, seen map[reflect.Type]bool, shadow
 			}
 		}
 
-		typeName := t.Name()
-		if typeName == "" {
-			typeName = "struct"
-		}
+		typeName := cmp.Or(t.Name(), "struct")
 
 		if hasRequired && !suppressed && isPrimitiveRejectingZero(field.Type) {
 			kindStr := field.Type.String()
@@ -368,7 +362,7 @@ func checkTagWarningsInternal(t reflect.Type, seen map[reflect.Type]bool, shadow
 		}
 	}
 
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		ft, ok := core.EmbeddedStructType(field)
 		if !ok {
@@ -438,9 +432,8 @@ func ValidateStruct(ctx *core.Context, target any) *ValidationError {
 
 func fieldIdentifier(field reflect.StructField) string {
 	if jsonTag := field.Tag.Get("json"); jsonTag != "" && jsonTag != "-" {
-		parts := strings.Split(jsonTag, ",")
-		if parts[0] != "" {
-			return parts[0]
+		if name, _, _ := strings.Cut(jsonTag, ","); name != "" {
+			return name
 		}
 	}
 	return field.Name
@@ -476,7 +469,7 @@ func validateStructRecursive(ctx *core.Context, val reflect.Value, prefix string
 
 		for _, rule := range fm.rules {
 			if err := applyValidationRule(fullName, fieldVal, rule); err != "" {
-				ruleName := strings.SplitN(rule, "=", 2)[0]
+				ruleName, _, _ := strings.Cut(rule, "=")
 				err = resolveCustomMessage(fm.customMsgs, ruleName, fullName, err)
 				errMap[fullName] = append(errMap[fullName], err)
 			}
@@ -495,7 +488,7 @@ func validateStructRecursive(ctx *core.Context, val reflect.Value, prefix string
 				elemType = elemType.Elem()
 			}
 			if elemType.Kind() == reflect.Struct && !isStdLibStruct(elemType) {
-				for idx := 0; idx < fieldVal.Len(); idx++ {
+				for idx := range fieldVal.Len() {
 					item := fieldVal.Index(idx)
 					itemPrefix := fmt.Sprintf("%s[%d]", fullName, idx)
 					validateStructRecursive(ctx, item, itemPrefix, errMap, nil, embedding)
@@ -532,7 +525,7 @@ func validateStructRecursive(ctx *core.Context, val reflect.Value, prefix string
 }
 
 func validateNilEmbedded(ft reflect.Type, prefix string, errMap map[string][]string, shadowed map[string]bool) {
-	for i := 0; i < ft.NumField(); i++ {
+	for i := range ft.NumField() {
 		f := ft.Field(i)
 		if subType, ok := core.EmbeddedStructType(f); ok {
 			validateNilEmbedded(subType, prefix, errMap, shadowed)
@@ -547,10 +540,7 @@ func validateNilEmbedded(ft reflect.Type, prefix string, errMap map[string][]str
 		}
 		fullName := joinPrefix(prefix, name)
 		tag := f.Tag.Get("validate")
-		msgTag := f.Tag.Get("msg")
-		if msgTag == "" {
-			msgTag = f.Tag.Get("message")
-		}
+		msgTag := cmp.Or(f.Tag.Get("msg"), f.Tag.Get("message"))
 		customMsgs := parseMessageTag(msgTag)
 		if tag != "" {
 			for _, rule := range splitRules(tag) {
@@ -565,12 +555,7 @@ func validateNilEmbedded(ft reflect.Type, prefix string, errMap map[string][]str
 }
 
 func applyValidationRule(field string, val reflect.Value, rule string) string {
-	parts := strings.SplitN(rule, "=", 2)
-	ruleName := parts[0]
-	ruleParam := ""
-	if len(parts) > 1 {
-		ruleParam = parts[1]
-	}
+	ruleName, ruleParam, _ := strings.Cut(rule, "=")
 
 	if ruleName != "required" {
 		for val.Kind() == reflect.Pointer || val.Kind() == reflect.Interface {
@@ -656,14 +641,7 @@ func applyValidationRule(field string, val reflect.Value, rule string) string {
 		}
 
 		actualVal := fmt.Sprintf("%v", val.Interface())
-		found := false
-		for _, opt := range validOptions {
-			if opt == actualVal {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(validOptions, actualVal) {
 			return fmt.Sprintf("field %s must be one of [%s]", field, strings.Join(validOptions, ", "))
 		}
 
@@ -733,11 +711,11 @@ func unwrapStructType(t reflect.Type) reflect.Type {
 }
 
 func collectShadowedFields(t reflect.Type, shadowed map[string]bool) map[string]bool {
-	merged := make(map[string]bool, len(shadowed)+t.NumField())
-	for k, v := range shadowed {
-		merged[k] = v
+	merged := maps.Clone(shadowed)
+	if merged == nil {
+		merged = make(map[string]bool, t.NumField())
 	}
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		if _, ok := core.EmbeddedStructType(field); ok {
 			continue

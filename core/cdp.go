@@ -189,7 +189,7 @@ func (c *cdpClient) writeFrame(opcode byte, payload []byte) error {
 	header = append(header, maskKey...)
 
 	masked := make([]byte, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		masked[i] = payload[i] ^ maskKey[i%4]
 	}
 

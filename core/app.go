@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -19,6 +20,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -117,7 +119,7 @@ func (g *CommandGroup) Group(prefix string, mw ...MiddlewareFunc) *CommandGroup 
 		prefix:      combined,
 		app:         g.app,
 		middlewares: mergedMW,
-		tags:        append([]string(nil), g.tags...),
+		tags:        slices.Clone(g.tags),
 	}
 }
 
@@ -146,11 +148,11 @@ func (g *CommandGroup) RegisterCommand(name string, handler HandlerFunc, doc Com
 	}
 	doc.Group = g.prefix
 	if len(g.tags) > 0 {
-		doc.Tags = append(append([]string(nil), g.tags...), doc.Tags...)
+		doc.Tags = append(slices.Clone(g.tags), doc.Tags...)
 	}
 	cmd := g.app.RegisterCommand(fullName, handler, doc)
 	if len(g.middlewares) > 0 {
-		cmd.middlewares = append(append([]MiddlewareFunc(nil), g.middlewares...), cmd.middlewares...)
+		cmd.middlewares = append(slices.Clone(g.middlewares), cmd.middlewares...)
 	}
 	return cmd
 }
@@ -204,25 +206,13 @@ type App struct {
 
 // New creates and initializes a new Brisa desktop application.
 func New(cfg Config) *App {
-	if cfg.AppID == "" {
-		cfg.AppID = "com.brisa.app"
-	}
-	if cfg.Title == "" {
-		cfg.Title = "Brisa Desktop App"
-	}
-	if cfg.Version == "" {
-		cfg.Version = "1.0.0"
-	}
-	if cfg.Addr == "" {
-		cfg.Addr = "127.0.0.1:0"
-	}
-	if cfg.InspectorURL == "" {
-		cfg.InspectorURL = "/brisa/inspector"
-	}
+	cfg.AppID = cmp.Or(cfg.AppID, "com.brisa.app")
+	cfg.Title = cmp.Or(cfg.Title, "Brisa Desktop App")
+	cfg.Version = cmp.Or(cfg.Version, "1.0.0")
+	cfg.Addr = cmp.Or(cfg.Addr, "127.0.0.1:0")
+	cfg.InspectorURL = cmp.Or(cfg.InspectorURL, "/brisa/inspector")
 	cfg.Theme = NormalizeTheme(cfg.Theme)
-	if cfg.Window.Title == "" {
-		cfg.Window.Title = cfg.Title
-	}
+	cfg.Window.Title = cmp.Or(cfg.Window.Title, cfg.Title)
 
 	var tokenBytes [24]byte
 	_, _ = rand.Read(tokenBytes[:])
@@ -334,7 +324,7 @@ func (a *App) Group(prefix string, mw ...MiddlewareFunc) *CommandGroup {
 	return &CommandGroup{
 		prefix:      strings.Trim(prefix, "."),
 		app:         a,
-		middlewares: append([]MiddlewareFunc(nil), mw...),
+		middlewares: slices.Clone(mw),
 	}
 }
 
@@ -405,7 +395,7 @@ func (a *App) On(event string, handler EventHandler) {
 // and all connected desktop frontend windows via Server-Sent Events.
 func (a *App) Emit(event string, data any) {
 	a.eventMu.RLock()
-	handlers := append([]EventHandler(nil), a.eventHandlers[event]...)
+	handlers := slices.Clone(a.eventHandlers[event])
 	a.eventMu.RUnlock()
 
 	for _, fn := range handlers {
@@ -469,7 +459,7 @@ func (a *App) executeCommand(stdCtx context.Context, command, reqID string, rawP
 
 	a.mu.RLock()
 	cmd, exists := a.commands[command]
-	globalMW := append([]MiddlewareFunc(nil), a.middlewares...)
+	globalMW := slices.Clone(a.middlewares)
 	a.mu.RUnlock()
 
 	if !exists {
@@ -488,12 +478,10 @@ func (a *App) executeCommand(stdCtx context.Context, command, reqID string, rawP
 
 	chain := make([]HandlerFunc, 0, len(globalMW)+len(cmd.middlewares)+1)
 	for _, mw := range globalMW {
-		m := mw
-		chain = append(chain, HandlerFunc(m))
+		chain = append(chain, HandlerFunc(mw))
 	}
 	for _, mw := range cmd.middlewares {
-		m := mw
-		chain = append(chain, HandlerFunc(m))
+		chain = append(chain, HandlerFunc(mw))
 	}
 	chain = append(chain, cmd.handler)
 
@@ -520,20 +508,11 @@ func (a *App) executeCommand(stdCtx context.Context, command, reqID string, rawP
 }
 
 func normalizeError(err error, command, reqID string) *ErrorResponse {
-	var rpcErr *RPCError
-	if errors.As(err, &rpcErr) {
-		status := rpcErr.Status
-		if status == 0 {
-			status = 400
-		}
-		code := rpcErr.Code
-		if code == "" {
-			code = "BRISA_ERROR"
-		}
+	if rpcErr, ok := errors.AsType[*RPCError](err); ok {
 		return &ErrorResponse{
-			Code:      code,
+			Code:      cmp.Or(rpcErr.Code, "BRISA_ERROR"),
 			Message:   rpcErr.Message,
-			Status:    status,
+			Status:    cmp.Or(rpcErr.Status, 400),
 			Command:   command,
 			RequestID: reqID,
 			Errors:    rpcErr.Errors,
@@ -541,13 +520,13 @@ func normalizeError(err error, command, reqID string) *ErrorResponse {
 		}
 	}
 
-	// Support ValidationError or custom error types implementing HTTPStatus() and ValidationErrors()
+	// Support ValidationError or custom error types implementing HTTPStatus() and FieldErrors()
 	type validationErrCarrier interface {
+		error
 		HTTPStatus() int
 		FieldErrors() map[string][]string
 	}
-	var ve validationErrCarrier
-	if errors.As(err, &ve) {
+	if ve, ok := errors.AsType[validationErrCarrier](err); ok {
 		return &ErrorResponse{
 			Code:      "VALIDATION_FAILED",
 			Message:   "validation failed",
